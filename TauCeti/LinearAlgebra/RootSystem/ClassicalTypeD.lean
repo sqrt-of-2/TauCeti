@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+import Mathlib.LinearAlgebra.LinearIndependent.BaseChange
 
 public section
 
@@ -31,7 +32,11 @@ constructed directly on the set of squared-length-two vectors and proved involut
 * `TauCeti.DynkinType.TypeDRoot` is the set of integral vectors of squared length two.
 * `TauCeti.DynkinType.typeDRootEquiv` enumerates these roots by `Fin (2 * n * (n - 1))`.
 * `TauCeti.DynkinType.typeDSimpleRoot` gives the Bourbaki-numbered simple roots.
+* `TauCeti.DynkinType.linearIndependent_typeDSimpleRoot` proves their integral linear
+  independence.
 * `TauCeti.DynkinType.sum_smul_typeDSimpleRootCoordinates` expands every root in that basis.
+* `TauCeti.DynkinType.typeDSimpleRootCoordinates_nonnegative_or_nonpositive` proves every root or
+  its negative is a nonnegative integral combination of the simple roots.
 * `TauCeti.DynkinType.typeDRootReflectionEquiv` is reflection in a root.
 
 ## References
@@ -422,6 +427,16 @@ def typeDSimpleRoot (n : ℕ) (hn : 4 ≤ n) (i : Fin n) : Fin n → ℤ :=
   else
     Pi.single ⟨n - 2, by omega⟩ 1 + Pi.single ⟨n - 1, by omega⟩ 1
 
+/-- The Gram matrix of the Bourbaki-numbered type `Dₙ` simple roots is its Cartan matrix. -/
+@[simp] theorem typeDSimpleRoot_dotProduct (hn : 4 ≤ n) (i j : Fin n) :
+    typeDSimpleRoot n hn i ⬝ᵥ typeDSimpleRoot n hn j = CartanMatrix.D n i j := by
+  simp only [typeDSimpleRoot, CartanMatrix.D, Matrix.of_apply]
+  split_ifs <;>
+    simp [dotProduct_add, dotProduct_sub, dotProduct_single, Pi.single_apply]
+  all_goals
+    simp only [Fin.ext_iff] at *
+    omega
+
 /-- The first `n` entries of `typeDRootEquiv` are the Bourbaki-numbered simple roots. -/
 @[simp] theorem typeDRootEquiv_apply_typeDSimpleIndex (hn : 4 ≤ n) (i : Fin n) :
     (typeDRootEquiv n hn (typeDSimpleIndex n hn i)).1 = typeDSimpleRoot n hn i := by
@@ -796,6 +811,143 @@ theorem sum_smul_typeDSimpleRootCoordinates (hn : 4 ≤ n) (x : TypeDRoot n) :
   by_cases hj₁ : (j : ℕ) + 1 < n
   · exact sum_smul_typeDSimpleRootCoordinates_apply_fork hn x j hj hj₁
   · exact sum_smul_typeDSimpleRootCoordinates_apply_last hn x j hj₁
+
+private def typeDRationalCoordinates (n : ℕ) (hn : 4 ≤ n) (x : Fin n → ℚ) : Fin n → ℚ := fun k =>
+  if (k : ℕ) + 2 < n then ∑ j ∈ Finset.Iic k, x j
+  else if (k : ℕ) + 1 < n then (∑ j, x j) / 2 - x ⟨n - 1, by omega⟩
+  else (∑ j, x j) / 2
+
+private def typeDRationalCoordinatesLinear (n : ℕ) (hn : 4 ≤ n) :
+    (Fin n → ℚ) →ₗ[ℚ] (Fin n → ℚ) where
+  toFun := typeDRationalCoordinates n hn
+  map_add' x y := by
+    funext k
+    simp only [typeDRationalCoordinates, Pi.add_apply]
+    split_ifs <;> simp [Finset.sum_add_distrib] <;> ring
+  map_smul' a x := by
+    funext k
+    simp only [typeDRationalCoordinates, Pi.smul_apply, smul_eq_mul]
+    split_ifs <;> simp only [← Finset.mul_sum, RingHom.id_apply] <;> ring
+
+private lemma typeDRationalCoordinates_intCast (hn : 4 ≤ n) (x : TypeDRoot n) :
+    typeDRationalCoordinates n hn (fun i => (x.1 i : ℚ)) =
+      fun i => (typeDSimpleRootCoordinates n hn x i : ℚ) := by
+  have hhalf : (typeDHalfTotal x : ℚ) = (∑ i, (x.1 i : ℚ)) / 2 := by
+    have h : (2 : ℚ) * (typeDHalfTotal x : ℚ) = ∑ i, (x.1 i : ℚ) := by
+      exact_mod_cast two_mul_typeDHalfTotal x
+    rw [← h]
+    ring
+  funext k
+  simp only [typeDRationalCoordinates, typeDSimpleRootCoordinates]
+  by_cases h₂ : (k : ℕ) + 2 < n
+  · simp only [if_pos h₂]
+    norm_cast
+  · by_cases h₁ : (k : ℕ) + 1 < n
+    · simp only [if_neg h₂, if_pos h₁]
+      rw [Int.cast_sub, hhalf]
+    · simp only [if_neg h₂, if_neg h₁]
+      exact hhalf.symm
+
+private lemma typeDRationalCoordinates_typeDSimpleRoot (hn : 4 ≤ n) (i : Fin n) :
+    typeDRationalCoordinates n hn (fun j => (typeDSimpleRoot n hn i j : ℚ)) =
+      Pi.single i 1 := by
+  let x := typeDRootEquiv n hn (typeDSimpleIndex n hn i)
+  have hx : x.1 = typeDSimpleRoot n hn i := typeDRootEquiv_apply_typeDSimpleIndex hn i
+  have hcoords := typeDSimpleRootCoordinates_typeDRootEquiv_apply_typeDSimpleIndex hn i
+  rw [← hx, typeDRationalCoordinates_intCast hn x, hcoords]
+  funext j
+  by_cases hji : j = i <;> simp [hji]
+
+private lemma typeDRationalCoordinatesLinear_typeDSimpleRoot (hn : 4 ≤ n) (i : Fin n) :
+    typeDRationalCoordinatesLinear n hn
+        (algebraMap ℤ ℚ ∘ typeDSimpleRoot n hn i) =
+      Pi.single i 1 :=
+  typeDRationalCoordinates_typeDSimpleRoot hn i
+
+/-- The Bourbaki simple roots of type `Dₙ` are linearly independent over `ℤ`. -/
+theorem linearIndependent_typeDSimpleRoot (hn : 4 ≤ n) :
+    LinearIndependent ℤ (typeDSimpleRoot n hn) := by
+  rw [← linearIndependent_algebraMap_comp_iff (R := ℤ) (S := ℚ)]
+  rw [Fintype.linearIndependent_iff]
+  intro c hc
+  have h := congrArg (typeDRationalCoordinatesLinear n hn) hc
+  simp only [map_sum, map_smul, map_zero] at h
+  simp_rw [typeDRationalCoordinatesLinear_typeDSimpleRoot hn] at h
+  intro i
+  have hi := congrFun h i
+  simpa [Pi.single_apply] using hi
+
+private def typeDNegRoot (x : TypeDRoot n) : TypeDRoot n :=
+  ⟨-x.1, by simpa [neg_dotProduct, dotProduct_neg] using x.2⟩
+
+private lemma typeDHalfTotal_neg (x : TypeDRoot n) :
+    typeDHalfTotal (typeDNegRoot x) = -typeDHalfTotal x := by
+  rcases typeDRoot_sum x with h | h | h <;>
+    simp [typeDHalfTotal, typeDNegRoot, h, Finset.sum_neg_distrib]
+
+private lemma typeDSimpleRootCoordinates_neg (hn : 4 ≤ n) (x : TypeDRoot n) :
+    typeDSimpleRootCoordinates n hn (typeDNegRoot x) =
+      -typeDSimpleRootCoordinates n hn x := by
+  funext i
+  by_cases h₂ : (i : ℕ) + 2 < n
+  · simp only [typeDSimpleRootCoordinates, if_pos h₂, typeDNegRoot, Pi.neg_apply,
+      Finset.sum_neg_distrib]
+  · by_cases h₁ : (i : ℕ) + 1 < n
+    · simp only [typeDSimpleRootCoordinates, if_neg h₂, if_pos h₁]
+      rw [typeDHalfTotal_neg]
+      simp only [typeDNegRoot, Pi.neg_apply]
+      rw [typeDSimpleRootCoordinates, if_neg h₂, if_pos h₁]
+      ring
+    · simp only [typeDSimpleRootCoordinates, if_neg h₂, if_neg h₁]
+      rw [typeDHalfTotal_neg]
+      rw [Pi.neg_apply, typeDSimpleRootCoordinates, if_neg h₂, if_neg h₁]
+
+private lemma typeDSimpleRootCoordinates_typeDRawRoot_zero_nonneg (hn : 4 ≤ n)
+    (p : TypeDPair n) (i : Fin n) :
+    0 ≤ typeDSimpleRootCoordinates n hn (typeDRawRoot (0, p)) i := by
+  have hp₁ := p.val.1.isLt
+  have hp₂ := p.val.2.isLt
+  have hi := i.isLt
+  have hp₁_le : (p.val.1 : ℕ) ≤ n - 1 := by omega
+  have hp₂_le : (p.val.2 : ℕ) ≤ n - 1 := by omega
+  have hi_le : (i : ℕ) ≤ n - 1 := by omega
+  by_cases hp : p.val.1 < p.val.2
+  · have hp₁_ne_last : p.val.1 ≠ (⟨n - 1, by omega⟩ : Fin n) := by
+      intro h
+      have := congrArg Fin.val h
+      simp at this
+      omega
+    simp only [typeDSimpleRootCoordinates, typeDRawRoot, typeDRawVector, Fin.isValue,
+      if_pos, typeDPairVector, hp]
+    split_ifs <;>
+      simp [typeDHalfTotal, Finset.sum_sub_distrib, Pi.sub_apply, Pi.single_apply,
+        Finset.mem_Iic, hp₁_ne_last] <;> norm_num at * <;> omega
+  · simp only [typeDSimpleRootCoordinates, typeDRawRoot, typeDRawVector, Fin.isValue,
+      if_pos, typeDPairVector, hp]
+    have hp' : p.val.2 < p.val.1 := lt_of_le_of_ne (not_lt.mp hp) p.property.symm
+    split_ifs <;>
+      simp [typeDHalfTotal, Finset.sum_add_distrib, Pi.add_apply, Pi.single_apply,
+        Finset.mem_Iic] <;> norm_num at * <;> omega
+
+/-- The simple-root coordinates of a type `Dₙ` root have a uniform sign. Thus every root is a
+nonnegative integral combination of the Bourbaki simple roots, or the negative of one. -/
+theorem typeDSimpleRootCoordinates_nonnegative_or_nonpositive (hn : 4 ≤ n) (x : TypeDRoot n) :
+    (∀ i, 0 ≤ typeDSimpleRootCoordinates n hn x i) ∨
+      (∀ i, typeDSimpleRootCoordinates n hn x i ≤ 0) := by
+  let r := (typeDRawRootEquiv n).symm x
+  have hx : typeDRawRoot r = x :=
+    (typeDRawRootEquiv_apply r).symm.trans (Equiv.apply_symm_apply _ x)
+  rcases r with ⟨s, p⟩
+  fin_cases s
+  · exact Or.inl fun i => hx ▸ typeDSimpleRootCoordinates_typeDRawRoot_zero_nonneg hn p i
+  · right
+    have hx' : typeDRawRoot (1, p) = x := by simpa using hx
+    have hneg : typeDRawRoot (1, p) = typeDNegRoot (typeDRawRoot (0, p)) := by
+      apply Subtype.ext
+      simp [typeDRawRoot, typeDRawVector, typeDNegRoot]
+    intro i
+    rw [← hx', hneg, typeDSimpleRootCoordinates_neg, Pi.neg_apply]
+    exact neg_nonpos.mpr (typeDSimpleRootCoordinates_typeDRawRoot_zero_nonneg hn p i)
 
 end DynkinType
 
