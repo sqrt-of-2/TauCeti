@@ -35,6 +35,8 @@ Kostant integral form; the root/root part requires the separate root-string form
 
 * `TauCeti.UniversalEnvelopingAlgebra.ι_mul_ι_eq_ι_mul_ι_add_zsmul_one`: the associative-ring
   form of an integral weight relation.
+* `TauCeti.UniversalEnvelopingAlgebra.map_ι_mul_map_ι_sub_eq_map_ι_lie`: an algebra map
+  carries the enveloping-algebra commutator to the Lie bracket.
 * `TauCeti.UniversalEnvelopingAlgebra.ringChoose_ι_mul_dividedPower_ι`: move a Cartan binomial
   coefficient to the right of a root-vector divided power.
 * `TauCeti.UniversalEnvelopingAlgebra.dividedPower_ι_mul_ringChoose_ι`: the reverse reordering.
@@ -54,6 +56,29 @@ universe u
 variable {L : Type u} [LieRing L]
 
 attribute [local instance 100] LieRing.ofAssociativeRing
+
+/-- An algebra map out of a universal enveloping algebra carries the associative commutator of
+two canonical images to their Lie bracket. -/
+theorem map_ι_mul_map_ι_sub_eq_map_ι_lie {R : Type*} [CommRing R] [LieAlgebra R L]
+    {B : Type*} [Ring B] [Algebra R B]
+    (ρ : _root_.UniversalEnvelopingAlgebra R L →ₐ[R] B) (a b : L) :
+    ρ (_root_.UniversalEnvelopingAlgebra.ι R a) *
+          ρ (_root_.UniversalEnvelopingAlgebra.ι R b) -
+        ρ (_root_.UniversalEnvelopingAlgebra.ι R b) *
+          ρ (_root_.UniversalEnvelopingAlgebra.ι R a) =
+      ρ (_root_.UniversalEnvelopingAlgebra.ι R ⁅a, b⁆) := by
+  rw [LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι R) a b,
+    LieRing.of_associative_ring_bracket, map_sub, map_mul, map_mul]
+
+/-- Images of canonical generators commute when their Lie bracket vanishes. -/
+theorem commute_map_ι_of_lie_eq_zero {R : Type*} [CommRing R] [LieAlgebra R L]
+    {B : Type*} [Ring B] [Algebra R B]
+    (ρ : _root_.UniversalEnvelopingAlgebra R L →ₐ[R] B) {a b : L} (hab : ⁅a, b⁆ = 0) :
+    Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι R a))
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι R b)) := by
+  apply sub_eq_zero.mp
+  rw [map_ι_mul_map_ι_sub_eq_map_ι_lie ρ, hab]
+  simp
 
 /-- The associative-ring form of an integral weight relation in a Lie algebra. -/
 theorem ι_mul_ι_eq_ι_mul_ι_add_zsmul_one {R : Type*} [CommRing R] [LieAlgebra R L]

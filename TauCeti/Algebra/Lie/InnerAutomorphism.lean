@@ -249,6 +249,7 @@ theorem exp_mul_exp_eq_exp_mul_exp_mul_of_lie_eq_of_commute {x y z : A}
     IsNilpotent.exp x * IsNilpotent.exp y =
       IsNilpotent.exp y * IsNilpotent.exp z * IsNilpotent.exp x := by
   have hz : IsNilpotent z :=
+    let _ := IsAddTorsionFree.of_module_rat A
     Associative.isNilpotent_of_commutator_eq (by rw [← hxy, Ring.lie_def]; abel) hxz hyz hx
   have hconj : IsNilpotent.exp x * IsNilpotent.exp y * IsNilpotent.exp (-x) =
       IsNilpotent.exp y * IsNilpotent.exp z := by

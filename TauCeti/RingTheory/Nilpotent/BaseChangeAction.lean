@@ -38,7 +38,9 @@ characteristic.
 * `TauCeti.mul_integralDividedPower`: multiplication formula for restricted divided powers.
 * `TauCeti.baseChangeExp`: the finite divided-power exponential on `R ⊗[ℤ] M` for an element of `A`.
 * `TauCeti.map_baseChangeExp`: naturality of the exponential under a map of parameter rings.
+* `TauCeti.baseChangeExp_zsmul_left`: rescaling the element by an integer rescales the parameter.
 * `TauCeti.baseChangeExp_add`: its one-parameter group law.
+* `TauCeti.commute_baseChangeExp`: exponentials of commuting elements commute.
 * `TauCeti.baseChangeExpLinearEquiv`: the resulting linear automorphism.
 * `TauCeti.baseChangeExpHom`: the additive one-parameter subgroup over `R`.
 
@@ -117,6 +119,17 @@ theorem integralDividedPower_eq_zero_of_le (x : A)
   ext v
   simp [coe_integralDividedPower_apply, Associative.dividedPower_def,
     pow_eq_zero_of_le hkn hk]
+
+/-- Restricting the divided power of an integer multiple scales the restricted operator by the
+same power of that integer. -/
+theorem integralDividedPower_zsmul (c : ℤ) {x : A} (M : S) (n : ℕ)
+    (hM : ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    (hcM : ∀ v ∈ M, Associative.dividedPower n (c • x) • v ∈ M) :
+    integralDividedPower (c • x) M n hcM = c ^ n • integralDividedPower x M n hM := by
+  ext v
+  rw [coe_integralDividedPower_apply, Associative.dividedPower_zsmul, smul_assoc,
+    LinearMap.smul_apply, ← coe_integralDividedPower_apply x M n hM v]
+  exact (AddSubgroupClass.coe_zsmul _ _).symm
 
 /-! ## The divided-power exponential after base change -/
 
@@ -197,6 +210,28 @@ theorem baseChangeExp_of_pow_eq_zero (x : A) (M : S)
   have hn_ge : nilpotencyClass x ≤ n := not_lt.1 hnot
   have hpow : x ^ nilpotencyClass x = 0 := pow_nilpotencyClass ⟨k, hk⟩
   rw [baseChange_integralDividedPower_eq_zero_of_le x M hM hpow hn_ge, smul_zero]
+
+/-- Rescaling the element by an integer `c` rescales the parameter of its integral exponential by
+`c`. -/
+theorem baseChangeExp_zsmul_left (c : ℤ) {x : A} (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    (hcM : ∀ n, ∀ v ∈ M, Associative.dividedPower n (c • x) • v ∈ M)
+    (hx : IsNilpotent x) (t : R) :
+    baseChangeExp (c • x) M hcM t = baseChangeExp x M hM ((c : R) * t) := by
+  obtain ⟨k, hk⟩ := hx
+  have hck : (c • x) ^ k = 0 := by
+    rw [smul_pow, hk, smul_zero]
+  rw [baseChangeExp_of_pow_eq_zero (c • x) M hcM hck,
+    baseChangeExp_of_pow_eq_zero x M hM hk]
+  refine Finset.sum_congr rfl fun n _ => ?_
+  have hb : ((c ^ n • integralDividedPower x M n (hM n)).baseChange R :
+      Module.End R (R ⊗[ℤ] M)) = c ^ n • (integralDividedPower x M n (hM n)).baseChange R :=
+    map_zsmul (Module.End.baseChangeHom ℤ R M) _ _
+  rw [integralDividedPower_zsmul c M n (hM n) (hcM n), hb,
+    ← Int.cast_smul_eq_zsmul R (c ^ n) ((integralDividedPower x M n (hM n)).baseChange R),
+    smul_smul, Int.cast_pow]
+  congr 1
+  ring
 
 /-- The base-changed exponential acts on a pure tensor by the divided-power formula over any
 truncation bound `k` satisfying `x ^ k = 0`. -/
@@ -293,6 +328,24 @@ theorem baseChangeExp_add (x : A) (M : S)
     exact baseChange_integralDividedPower_eq_zero_of_le x M hM
       (pow_nilpotencyClass hx) hn
   · exact baseChange_mul_integralDividedPower x M hM
+
+/-- Exponentials of commuting elements commute. -/
+theorem commute_baseChangeExp {x y : A} (M : S) (hxy : Commute x y)
+    (hMx : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    (hMy : ∀ n, ∀ v ∈ M, Associative.dividedPower n y • v ∈ M)
+    (t u : R) :
+    Commute (baseChangeExp x M hMx t) (baseChangeExp y M hMy u) := by
+  rw [baseChangeExp, baseChangeExp]
+  refine Commute.sum_left _ _ _ fun m _ => Commute.sum_right _ _ _ fun n _ => ?_
+  refine Commute.smul_left (Commute.smul_right ?_ _) _
+  have hcomm : integralDividedPower x M m (hMx m) * integralDividedPower y M n (hMy n) =
+      integralDividedPower y M n (hMy n) * integralDividedPower x M m (hMx m) := by
+    ext v
+    simp only [Module.End.mul_apply, coe_integralDividedPower_apply, ← mul_smul]
+    rw [(Associative.commute_dividedPower_dividedPower hxy m n).eq]
+  have h := congrArg (fun f : Module.End ℤ M => (Module.End.baseChangeHom ℤ R M) f) hcomm
+  simp only [map_mul] at h
+  exact h
 
 /-- The base-changed divided-power exponential at zero is the identity. -/
 @[simp]

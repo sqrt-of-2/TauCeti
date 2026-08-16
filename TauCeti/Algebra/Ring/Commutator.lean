@@ -5,22 +5,26 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Algebra.Basic
-public import Mathlib.Algebra.Algebra.Rat
 public import Mathlib.RingTheory.Nilpotent.Defs
+import Mathlib.Algebra.Group.Torsion
 import Mathlib.Tactic.Abel
+import Mathlib.Tactic.NoncommRing
 import Mathlib.Tactic.Ring
 
 /-!
 # Commutators in associative rings
 
-This file records identities for moving elements past powers when their ring commutator is a
-scalar multiple of one of the elements, or is central for the two elements it is built from.
+This file records identities for moving elements past powers when their ring commutator is an
+integer multiple of one of the elements or commutes with the powered element, together with a
+nilpotency criterion for a commutator that is central for both of its arguments.
 
 ## Main results
 
 * `TauCeti.Associative.mul_pow_eq_pow_mul_add_zsmul`: moving an element past a power of an
   integer-eigenvector for its commutator.
 * `TauCeti.Associative.mul_pow_eq_pow_mul_add_intCast`: the same identity in shifted-factor form.
+* `TauCeti.Associative.mul_pow_of_commutator_eq`: moving an element past a power when the
+  commutator commutes with the powered element.
 * `TauCeti.Associative.isNilpotent_of_commutator_eq`: a commutator commuting with both of its
   arguments is nilpotent as soon as one of them is.
 -/
@@ -58,32 +62,44 @@ theorem mul_pow_eq_pow_mul_add_intCast (hxy : x * y - y * x = c • y) (n : ℕ)
   rw [mul_pow_eq_pow_mul_add_zsmul hxy, zsmul_eq_mul', mul_add, Int.cast_mul,
     Int.cast_natCast, (Nat.cast_commute n (c : A)).eq]
 
+/-- Moving one element across an ordinary power when its commutator commutes with the element being
+powered. -/
+theorem mul_pow_of_commutator_eq {A : Type*} [Semiring A] {x y z : A}
+    (hxy : x * y = y * x + z) (hyz : Commute y z) (n : ℕ) :
+    x * y ^ n = y ^ n * x + n • (y ^ (n - 1) * z) := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      cases n with
+      | zero => simpa using hxy
+      | succ n =>
+          simp only [Nat.add_sub_cancel] at ih ⊢
+          rw [pow_succ, ← mul_assoc, ih, add_mul, mul_assoc (y ^ (n + 1)) x y,
+            hxy, mul_add]
+          -- Expose the final successor separately: rewriting `add_nsmul` on `n + 2` directly
+          -- would split the coefficient as `n` and `2`, rather than the required `n + 1` and `1`.
+          rw [show n + 2 = (n + 1) + 1 by omega, add_nsmul, one_nsmul]
+          noncomm_ring [hyz.eq, pow_succ]
+          simp only [nsmul_eq_mul, Nat.cast_add, Nat.cast_ofNat, mul_one]
+          noncomm_ring
+
 section CentralCommutator
 
-variable {A : Type*} [Ring A] [Algebra ℚ A] {x y z : A}
+variable {A : Type*} [Ring A] [IsAddTorsionFree A] {x y z : A}
 
 /-- **Nilpotency of a central commutator.** If `x * y = y * x + z` with `z` commuting with both `x`
-and `y`, then `z` is nilpotent as soon as `x` is, with the same nilpotency exponent: over a
-`ℚ`-algebra, moving `y` past `xⁿ` releases `n` copies of `z`, and `xⁿ = 0` propagates down to
-`zⁿ = 0`. -/
+and `y` in an additively torsion-free ring, then `z` is nilpotent as soon as `x` is. -/
 theorem isNilpotent_of_commutator_eq (hxy : x * y = y * x + z) (hxz : Commute x z)
     (hyz : Commute y z) (hx : IsNilpotent x) : IsNilpotent z := by
   obtain ⟨n, hn⟩ := hx
   -- Moving `y` past a power of `x` releases that many copies of the commutator.
-  have hpow : ∀ m : ℕ, x ^ (m + 1) * y = y * x ^ (m + 1) + (m + 1) • (z * x ^ m) := by
-    intro m
-    induction m with
-    | zero => simpa using hxy
-    | succ m ih =>
-      have hzx : x * (z * x ^ m) = z * x ^ (m + 1) := by
-        rw [← mul_assoc, hxz.eq, mul_assoc, ← pow_succ']
-      calc x ^ (m + 1 + 1) * y = x * (x ^ (m + 1) * y) := by rw [← mul_assoc, ← pow_succ']
-        _ = x * y * x ^ (m + 1) + (m + 1) • (z * x ^ (m + 1)) := by
-            rw [ih, mul_add, ← mul_assoc, mul_smul_comm, hzx]
-        _ = y * x ^ (m + 1 + 1) + (z * x ^ (m + 1) + (m + 1) • (z * x ^ (m + 1))) := by
-            rw [hxy, add_mul, mul_assoc, ← pow_succ', add_assoc]
-        _ = y * x ^ (m + 1 + 1) + (m + 1 + 1) • (z * x ^ (m + 1)) := by
-            rw [← succ_nsmul']
+  have hpow (m : ℕ) : x ^ (m + 1) * y = y * x ^ (m + 1) + (m + 1) • (z * x ^ m) := by
+    have h := mul_pow_of_commutator_eq (x := y) (y := x) (z := -z)
+      (by rw [hxy]; abel) hxz.neg_right (m + 1)
+    simp only [Nat.add_sub_cancel, mul_neg] at h
+    rw [(hxz.pow_left m).eq] at h
+    simp only [smul_neg] at h
+    exact sub_eq_iff_eq_add.mp (by simpa [sub_eq_add_neg] using h.symm)
   -- Each copy of `z` extracted this way lowers the power of `x` that annihilates it.
   have hstep : ∀ m k : ℕ, x ^ (m + 1) * z ^ k = 0 → x ^ m * z ^ (k + 1) = 0 := by
     intro m k h
@@ -94,12 +110,9 @@ theorem isNilpotent_of_commutator_eq (hxy : x * y = y * x + z) (hxz : Commute x 
     have hB : x ^ (m + 1) * y * z ^ k = (m + 1) • (x ^ m * z ^ (k + 1)) := by
       rw [hpow m, add_mul, mul_assoc, h, mul_zero, zero_add, smul_mul_assoc,
         (hxz.symm.pow_right m).eq, mul_assoc, ← pow_succ']
-    have hkey : ((m + 1 : ℕ) : ℚ) • (x ^ m * z ^ (k + 1)) = 0 := by
-      rw [Nat.cast_smul_eq_nsmul ℚ, ← hB]
-      exact hA
-    have hc : (((m + 1 : ℕ) : ℚ))⁻¹ • (((m + 1 : ℕ) : ℚ) • (x ^ m * z ^ (k + 1))) = 0 := by
-      rw [hkey, smul_zero]
-    rwa [inv_smul_smul₀ (Nat.cast_ne_zero.mpr m.succ_ne_zero)] at hc
+    apply (nsmul_eq_zero_iff_right m.succ_ne_zero).mp
+    rw [← hB]
+    exact hA
   -- Peel the powers of `x` off one at a time.
   have hpeel : ∀ k ≤ n, x ^ (n - k) * z ^ k = 0 := by
     intro k
