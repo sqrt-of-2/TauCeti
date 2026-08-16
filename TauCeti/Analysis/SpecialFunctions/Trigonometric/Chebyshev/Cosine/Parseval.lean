@@ -5,7 +5,6 @@ Authors: Antigravity
 -/
 module
 
-public import TauCeti.Analysis.InnerProductSpace.Parseval
 public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Cosine.HilbertBasis
 public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Parseval
 
