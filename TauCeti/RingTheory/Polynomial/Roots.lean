@@ -37,21 +37,13 @@ discarded.
   type with the root set.
 * `Polynomial.Separable.isRootEnumeration`: a numbering of the root set of a separable
   polynomial supplies a root enumeration.
-* `TauCeti.IsRootEnumeration.splits`: over fields, a full root enumeration forces the mapped
-  polynomial to split.
+* `TauCeti.IsRootEnumeration.splits`: for a polynomial over a field, a full root enumeration
+  forces the mapped polynomial to split.
 * `TauCeti.IsRootEnumeration.injective_iff_separable`: over fields, a full enumeration of a
   nonzero polynomial has no repetitions exactly when the mapped polynomial is separable.
 
 The numbering lemma lets root-product formulas be expressed as finite products indexed by
 `Fin f.natDegree`, without choosing a global order on the root set.
-
-## References
-
-`IsRootEnumeration`, together with the splitting and separability statements about it, is the
-Layer 4 milestone "The root data that a resolvent statement assumes" of the
-[polynomial Galois groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/PolynomialGaloisGroups/README.md);
-the definition itself is stated in that roadmap's
-[`Suggested.lean`](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/PolynomialGaloisGroups/Suggested.lean).
 -/
 
 public section
@@ -130,11 +122,6 @@ theorem coe_equivRootSet (hx : IsRootEnumeration f x) (hinj : Function.Injective
     (i : Fin n) : (hx.equivRootSet hinj i : E) = x i :=
   congrArg Subtype.val (Equiv.ofBijective_apply _ _ i)
 
-theorem equivRootSet_symm_apply (hx : IsRootEnumeration f x) (hinj : Function.Injective x)
-    (a : f.rootSet E) : x ((hx.equivRootSet hinj).symm a) = a := by
-  simpa only [coe_equivRootSet] using
-    congrArg Subtype.val ((hx.equivRootSet hinj).apply_symm_apply a)
-
 end IsRootEnumeration
 
 /-- A numbering of the root set of a separable polynomial enumerates the full root multiset.
@@ -147,9 +134,9 @@ theorem _root_.Polynomial.Separable.isRootEnumeration (hf : f.Separable)
 
 end Domain
 
-section Field
+section DomainTarget
 
-variable {F : Type*} [Field F] {E : Type*} [Field E] [Algebra F E]
+variable {F : Type*} [Field F] {E : Type*} [CommRing E] [IsDomain E] [Algebra F E]
   {n : ℕ} {f : F[X]} {x : Fin n → E}
 
 namespace IsRootEnumeration
@@ -159,6 +146,17 @@ theorem splits (hx : IsRootEnumeration f x) (hdeg : f.natDegree = n) :
     (f.map (algebraMap F E)).Splits := by
   rw [Polynomial.splits_iff_card_roots, hx.card_roots, ← hdeg,
     Polynomial.natDegree_map]
+
+end IsRootEnumeration
+
+end DomainTarget
+
+section FieldTarget
+
+variable {F : Type*} [Field F] {E : Type*} [Field E] [Algebra F E]
+  {n : ℕ} {f : F[X]} {x : Fin n → E}
+
+namespace IsRootEnumeration
 
 /-- A full root enumeration of a nonzero polynomial is injective exactly when the mapped
 polynomial is separable: injectivity says the `f.natDegree` listed roots are distinct, which for
@@ -171,6 +169,6 @@ theorem injective_iff_separable (hx : IsRootEnumeration f x) (hf : f ≠ 0)
 
 end IsRootEnumeration
 
-end Field
+end FieldTarget
 
 end TauCeti
