@@ -8,6 +8,7 @@ module
 public import Mathlib.LinearAlgebra.QuadraticForm.Real
 public import TauCeti.Data.SignType.Cardinality
 public import TauCeti.LinearAlgebra.QuadraticForm.Isometry
+public import TauCeti.LinearAlgebra.QuadraticForm.RegularFormClass.Discriminant
 public import TauCeti.LinearAlgebra.QuadraticForm.Signature
 
 /-!
@@ -42,6 +43,9 @@ to the normal form of its own signature.
   normal form of its signature.
 * `QuadraticForm.equivalent_realSignatureForm_iff`: distinct signatures give non-isometric normal
   forms.
+* `QuadraticForm.discr_formClass_eq_sigNeg_nsmul`: the discriminant square class of a regular
+  real form is the parity of its negative index.
+* `QuadraticForm.sign_discr`: the sign of the Gram determinant is `(-1) ^ sigNeg Q`.
 
 ## References
 
@@ -138,6 +142,111 @@ theorem equivalent_iff_sigPos_eq_and_sigNeg_eq {Q : _root_.QuadraticForm ℝ M}
   refine ⟨fun h ↦ ⟨h.2.1, h.2.2⟩, fun h ↦ ⟨?_, h.1, h.2⟩⟩
   rw [← sigPos_add_sigNeg_of_nondegenerate Q hQ, ← sigPos_add_sigNeg_of_nondegenerate Q' hQ',
     h.1, h.2]
+
+/-! ### The determinant sign -/
+
+/-- The discriminant square class of a regular real quadratic form is the class of `-1` repeated
+its negative index of inertia times. This is the basis-free form of the determinant-sign formula.
+-/
+theorem discr_formClass_eq_sigNeg_nsmul (Q : _root_.QuadraticForm ℝ M)
+    (hQ : Q.Nondegenerate) :
+    TauCeti.RegularFormClass.discr (TauCeti.formClass Q hQ) =
+      sigNeg Q • TauCeti.squareClass (-1 : ℝˣ) := by
+  classical
+  obtain ⟨w, hw, hQw⟩ := Q.equivalent_one_neg_one_weighted_sum_squared
+    (QuadraticMap.nondegenerate_associated_iff.mpr hQ).1
+  let u : Fin (Module.finrank ℝ M) → ℝˣ := fun i ↦ Units.mk0 (w i) (by
+    rcases hw i with hi | hi <;> simp [hi])
+  have hQu : Q.Equivalent (QuadraticMap.weightedSumSquares ℝ fun i ↦ (u i : ℝ)) := by
+    simpa only [u, Units.val_mk0] using hQw
+  rw [TauCeti.discr_formClass Q hQ ⟨Module.finrank ℝ M, u⟩ (by
+    rw [TauCeti.presentedForm_eq_weightedSumSquares]
+    exact hQu)]
+  have hprod := TauCeti.squareClass_prod (Finset.univ : Finset (Fin (Module.finrank ℝ M))) u
+  rw [show TauCeti.squareClass (∏ i, u i) = ∑ i, TauCeti.squareClass (u i) by
+    simpa using hprod]
+  have hu (i : Fin (Module.finrank ℝ M)) :
+      TauCeti.squareClass (u i) =
+        if w i < 0 then TauCeti.squareClass (-1 : ℝˣ) else 0 := by
+    rcases hw i with hi | hi
+    · have hui : u i = (-1 : ℝˣ) := by
+        ext
+        simp [u, hi]
+      rw [hui, ite_eq_left (by rw [hi]; norm_num)]
+    · have hui : u i = (1 : ℝˣ) := by
+        ext
+        simp [u, hi]
+      rw [hui, ite_eq_right (by rw [hi]; norm_num)]
+      exact (TauCeti.squareClass_eq_zero_iff 1).mpr ⟨1, by simp⟩
+  simp_rw [hu]
+  change (∑ i ∈ (Finset.univ : Finset (Fin (Module.finrank ℝ M))),
+      if w i < 0 then TauCeti.squareClass (-1 : ℝˣ) else 0) = _
+  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const]
+  congr 1
+  rw [Q.sigNeg_of_equiv_weightedSumSquares hQw]
+  rw [Set.ncard_eq_toFinset_card]
+  congr 1
+  ext i
+  simp
+
+/-- The sign of the Gram determinant of a regular real quadratic form is `-1` to the power of
+its negative index of inertia. The statement is independent of the basis, as its right-hand side
+shows. -/
+theorem sign_discr {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (Q : _root_.QuadraticForm ℝ M)
+    (hQ : Q.Nondegenerate) (b : Module.Basis ι ℝ M) :
+    SignType.sign (Q.discr b) = (-1 : SignType) ^ sigNeg Q := by
+  classical
+  -- Reindex a Sylvester normal form by the given basis, so both discriminants use `ι`.
+  obtain ⟨w, hw, hQw⟩ := Q.equivalent_one_neg_one_weighted_sum_squared
+    (QuadraticMap.nondegenerate_associated_iff.mpr hQ).1
+  have hcard : Fintype.card ι = Fintype.card (Fin (Module.finrank ℝ M)) := by
+    rw [Fintype.card_fin]
+    exact (Module.finrank_eq_card_basis b).symm
+  let σ : ι ≃ Fin (Module.finrank ℝ M) := Fintype.equivOfCardEq hcard
+  let v : ι → ℝ := w ∘ σ
+  have hv (i : ι) : v i = -1 ∨ v i = 1 := hw (σ i)
+  have hQv : Q.Equivalent (QuadraticMap.weightedSumSquares ℝ v) :=
+    hQw.trans (TauCeti.equivalent_weightedSumSquares_comp w σ)
+  have hneg : sigNeg Q = {i | v i < 0}.ncard :=
+    Q.sigNeg_of_equiv_weightedSumSquares hQv
+  obtain ⟨e⟩ := hQv
+  have hcomp : Q = (QuadraticMap.weightedSumSquares ℝ v).comp e.toLinearEquiv.toLinearMap := by
+    ext x
+    exact (e.map_app' x).symm
+  -- Changing basis multiplies the diagonal determinant by a nonzero square.
+  conv_lhs =>
+    rw [hcomp, QuadraticForm.discr_comp (Pi.basisFun ℝ ι)
+      (QuadraticMap.weightedSumSquares ℝ v) e.toLinearEquiv.toLinearMap,
+      QuadraticForm.discr_eq_discr', QuadraticForm.discr'_weightedSumSquares,
+      sign_mul, sign_mul]
+  let A := LinearMap.toMatrix b (Pi.basisFun ℝ ι) e.toLinearEquiv.toLinearMap
+  have hdet : A.det ≠ 0 := by
+    exact (LinearEquiv.isUnit_det e.toLinearEquiv b (Pi.basisFun ℝ ι)).ne_zero
+  have hsignA : SignType.sign A.det * SignType.sign A.det = 1 := by
+    have hs : SignType.sign A.det ≠ 0 := sign_ne_zero.mpr hdet
+    cases h : SignType.sign A.det <;> simp_all
+  rw [hsignA, one_mul]
+  -- The remaining diagonal product has one negative factor for each negative square.
+  -- Expose the bundled sign homomorphism so its finite-product law rewrites.
+  change (signHom : ℝ →*₀ SignType) (∏ i, v i) = _
+  rw [map_prod]
+  change (∏ i, SignType.sign (v i)) = _
+  have hsign (i : ι) : SignType.sign (v i) = if v i < 0 then -1 else 1 := by
+    rcases hv i with hi | hi
+    · rw [hi, ite_eq_left (by norm_num)]
+      norm_num
+    · rw [hi, ite_eq_right (by norm_num)]
+      norm_num
+  simp_rw [hsign]
+  -- Expose the `Fintype` product as the `univ` product used by `Finset.prod_ite`.
+  change (∏ i ∈ (Finset.univ : Finset ι), if v i < 0 then (-1 : SignType) else 1) = _
+  rw [Finset.prod_ite, Finset.prod_const, Finset.prod_const, one_pow, mul_one]
+  congr 1
+  rw [hneg, Set.ncard_eq_toFinset_card]
+  congr 1
+  ext i
+  simp
 
 /-- The normal form of signature `(p, q)`: the orthogonal sum of `p` copies of `⟨1⟩` and `q`
 copies of `⟨-1⟩`. -/

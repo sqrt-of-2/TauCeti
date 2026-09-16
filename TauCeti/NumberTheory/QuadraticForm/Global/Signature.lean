@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.QuadraticForm.Signature
+public import TauCeti.LinearAlgebra.QuadraticForm.Real
 public import TauCeti.NumberTheory.QuadraticForm.Global.Localization
 
 /-!
@@ -29,6 +29,10 @@ nondegenerate form, the two indices add to the global rank.
 
 * `QuadraticForm.realPositiveIndex_add_realNegativeIndex_eq_finrank`: the indices of a
   nondegenerate form add to its rank.
+* `QuadraticForm.discr_atRealPlace_eq_realNegativeIndex_nsmul`: the localized discriminant is
+  the square class of `-1` repeated its negative index times.
+* `QuadraticForm.sign_discr_atRealPlace`: the sign of a localized Gram determinant is
+  `(-1) ^ realNegativeIndex`.
 * `QuadraticMap.Equivalent.realSignature_eq`: equivalent forms have equal real signatures.
 * `QuadraticForm.realSignature_prod`: real-place signatures are additive under orthogonal
   products.
@@ -103,6 +107,33 @@ theorem realPositiveIndex_add_realNegativeIndex_eq_finrank [FiniteDimensional K 
   have hsum := sigPos_add_sigNeg_add_radical (Q := Q.atRealPlace w)
   rw [hlocal.radical_eq_bot, finrank_bot, add_zero, Module.finrank_baseChange] at hsum
   simpa only [realPositiveIndex_eq_sigPos, realNegativeIndex_eq_sigNeg] using hsum
+
+/-! ### Discriminant sign -/
+
+/-- The square-class discriminant of a regular form localized at a real place is the class of
+`-1` repeated the local negative index of inertia times. -/
+theorem discr_atRealPlace_eq_realNegativeIndex_nsmul [FiniteDimensional K V]
+    {Q : _root_.QuadraticForm K V} (hQ : Q.Nondegenerate)
+    (w : {w : InfinitePlace K // w.IsReal}) :
+    let hQw : (Q.atRealPlace w).Nondegenerate :=
+      QuadraticForm.Nondegenerate.atRealPlace hQ w
+    TauCeti.RegularFormClass.discr (TauCeti.formClass (Q.atRealPlace w) hQw) =
+      Q.realNegativeIndex w • TauCeti.squareClass (-1 : ℝˣ) := by
+  let hQw : (Q.atRealPlace w).Nondegenerate :=
+    QuadraticForm.Nondegenerate.atRealPlace hQ w
+  rw [realNegativeIndex_eq_sigNeg]
+  exact discr_formClass_eq_sigNeg_nsmul (Q.atRealPlace w) hQw
+
+/-- In every basis, the sign of the Gram determinant of a regular form localized at a real place
+is `-1` to the power of its local negative index of inertia. -/
+theorem sign_discr_atRealPlace [FiniteDimensional K V] {ι : Type*} [Fintype ι]
+    [DecidableEq ι] {Q : _root_.QuadraticForm K V} (hQ : Q.Nondegenerate)
+    (w : {w : InfinitePlace K // w.IsReal})
+    (b : Module.Basis ι ℝ (TauCeti.RealScalarExtension (V := V) w)) :
+    SignType.sign ((Q.atRealPlace w).discr b) =
+      (-1 : SignType) ^ Q.realNegativeIndex w := by
+  rw [realNegativeIndex_eq_sigNeg]
+  exact sign_discr (Q.atRealPlace w) (QuadraticForm.Nondegenerate.atRealPlace hQ w) b
 
 variable {W : Type v'} [AddCommGroup W] [Module K W]
 variable {Q : _root_.QuadraticForm K V} {R : _root_.QuadraticForm K W}
