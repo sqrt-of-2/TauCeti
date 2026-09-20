@@ -92,9 +92,8 @@ theorem isOpen_image_schwarzChristoffelPrimitive (a e : ι → ℝ) (z₀ : Uppe
   have hzH : z ∈ upperHalfPlaneSet := hsH hz
   have hstrict := ((differentiableOn_schwarzChristoffelPrimitive a e z₀).analyticAt
     (isOpen_upperHalfPlaneSet.mem_nhds hzH)).hasStrictDerivAt
-  have hderiv : deriv (schwarzChristoffelPrimitive a e z₀) z ≠ 0 := by
-    rw [deriv_schwarzChristoffelPrimitive a e z₀ hzH]
-    exact schwarzChristoffelIntegrand_ne_zero a e hzH
+  have hderiv : deriv (schwarzChristoffelPrimitive a e z₀) z ≠ 0 :=
+    deriv_schwarzChristoffelPrimitive_ne_zero a e z₀ hzH
   rw [← hstrict.map_nhds_eq hderiv]
   exact image_mem_map (hs.mem_nhds hz)
 

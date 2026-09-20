@@ -72,9 +72,8 @@ theorem isLocalHomeomorphOn_schwarzChristoffelPrimitive (a e : ι → ℝ) (z₀
   refine IsLocalHomeomorphOn.mk _ _ fun z hz => ?_
   have hstrict := ((differentiableOn_schwarzChristoffelPrimitive a e z₀).analyticAt
     (isOpen_upperHalfPlaneSet.mem_nhds hz)).hasStrictDerivAt
-  have hderiv : deriv (schwarzChristoffelPrimitive a e z₀) z ≠ 0 := by
-    rw [deriv_schwarzChristoffelPrimitive a e z₀ hz]
-    exact schwarzChristoffelIntegrand_ne_zero a e hz
+  have hderiv : deriv (schwarzChristoffelPrimitive a e z₀) z ≠ 0 :=
+    deriv_schwarzChristoffelPrimitive_ne_zero a e z₀ hz
   have hf := hstrict.hasStrictFDerivAt_equiv hderiv
   exact ⟨hf.toOpenPartialHomeomorph _, hf.mem_toOpenPartialHomeomorph_source, fun w _ => by
     rw [hf.toOpenPartialHomeomorph_coe]⟩

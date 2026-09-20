@@ -42,6 +42,8 @@ separate boundary analysis.
   the value at the new base point.
 * `TauCeti.conformalAt_schwarzChristoffelPrimitive` -- it is conformal throughout the upper
   half-plane.
+* `TauCeti.deriv_schwarzChristoffelPrimitive_ne_zero` -- its derivative has no zero in the upper
+  half-plane.
 * `TauCeti.logDeriv_deriv_schwarzChristoffelPrimitive` -- its pre-Schwarzian derivative is the
   sum of the simple fractions `e i / (z - a i)`.
 * `TauCeti.eqOn_schwarzChristoffelPrimitive` -- the derivative and normalization uniquely
@@ -107,6 +109,13 @@ theorem deriv_schwarzChristoffelPrimitive (a e : ι → ℝ) (z₀ : UpperHalfPl
     deriv (schwarzChristoffelPrimitive a e z₀) z = schwarzChristoffelIntegrand a e z :=
   (hasDerivAt_schwarzChristoffelPrimitive a e z₀ hz).deriv
 
+/-- The derivative of the normalized Schwarz--Christoffel primitive has no zero in the upper
+half-plane. -/
+theorem deriv_schwarzChristoffelPrimitive_ne_zero (a e : ι → ℝ) (z₀ : UpperHalfPlane)
+    {z : ℂ} (hz : z ∈ upperHalfPlaneSet) :
+    deriv (schwarzChristoffelPrimitive a e z₀) z ≠ 0 :=
+  deriv_schwarzChristoffelPrimitive a e z₀ hz ▸ schwarzChristoffelIntegrand_ne_zero a e hz
+
 /-- **The pre-Schwarzian derivative of the Schwarz--Christoffel map.**  Throughout the upper
 half-plane the quotient `F'' / F'` of the normalized primitive `F` is the sum of simple fractions
 `∑ i, e i / (z - a i)`.  This is the Schwarz--Christoffel differential equation, the identity a
@@ -135,8 +144,7 @@ theorem conformalAt_schwarzChristoffelPrimitive (a e : ι → ℝ) (z₀ : Upper
     {z : ℂ} (hz : z ∈ upperHalfPlaneSet) :
     ConformalAt (schwarzChristoffelPrimitive a e z₀) z := by
   exact (hasDerivAt_schwarzChristoffelPrimitive a e z₀ hz).differentiableAt.conformalAt
-    (deriv_schwarzChristoffelPrimitive a e z₀ hz ▸
-      schwarzChristoffelIntegrand_ne_zero a e hz)
+    (deriv_schwarzChristoffelPrimitive_ne_zero a e z₀ hz)
 
 /-- A primitive of the Schwarz--Christoffel integrand that vanishes at the chosen base point agrees
 with `schwarzChristoffelPrimitive` throughout the upper half-plane. -/
