@@ -80,7 +80,7 @@ theorem whiskerLeft_ihomIsoTensorLeft_inv_app_comp_ev (Z : C) :
 
 /-- Under the comparison `(Y ⟶[C] Z) ⟶ D ⊗ Z`, the evaluation of the pairing becomes the
 evaluation of the internal hom. -/
-@[reassoc]
+@[reassoc (attr := simp)]
 theorem whiskerLeft_ihomIsoTensorLeft_hom_app_comp_evaluation (Z : C) :
     Y ◁ (ihomIsoTensorLeft D Y).hom.app Z ≫ (α_ Y D Z).inv ≫ ε_ D Y ▷ Z ≫ (λ_ Z).hom =
       (ihom.ev Y).app Z := by
@@ -159,7 +159,7 @@ the unit as a left dual of `Y`: the categorical dual of `Y` is `Hom(Y, 𝟙_ C)`
 
 This is deliberately not an instance because the chosen dual `D` is not determined by the
 resulting `ExactPairing` type. -/
-@[reducible]
+@[instance_reducible]
 def exactPairingIhomUnit : ExactPairing (Y ⟶[C] 𝟙_ C) Y :=
   exactPairingCongrLeft (ihomUnitIso D Y)
 
