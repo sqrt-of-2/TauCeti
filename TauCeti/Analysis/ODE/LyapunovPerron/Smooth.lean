@@ -279,14 +279,13 @@ theorem eq_fderiv_lyapunovPerronSolution_apply {v : X} {η : ℝ≥0 →ᵇ X}
         (ζ s.toNNReal)) t) → ζ = homogeneousCLM hs v + T ζ := fun ζ hζ ↦ by
     ext t
     simp [hζ t, homogeneousCLM_apply, T, L, hΦ]
-  have hsub : η - D v = T (η - D v) := by
-    rw [map_sub, ← add_sub_add_left_eq_sub (T η) (T (D v)) (homogeneousCLM hs v), ← hfix η hη,
-      ← hfix (D v) (fderiv_lyapunovPerronSolution_apply hs hu hα hN hsmall hNs hN' hδ hξ₀ v)]
-  have hle : ‖η - D v‖ ≤ ‖T‖ * ‖η - D v‖ := by
-    conv_lhs => rw [hsub]
-    exact T.le_opNorm (η - D v)
-  have hzero : ‖η - D v‖ = 0 := by nlinarith [norm_nonneg (η - D v)]
-  exact sub_eq_zero.1 (norm_eq_zero.1 hzero)
+  have hcontract : ContractingWith ‖T‖₊ (fun ζ ↦ homogeneousCLM hs v + T ζ) := by
+    constructor
+    · exact_mod_cast hT
+    · refine LipschitzWith.of_dist_le_mul fun ζ₁ ζ₂ ↦ ?_
+      simpa [dist_eq_norm, add_sub_add_left_eq_sub] using T.lipschitzWith.dist_le_mul ζ₁ ζ₂
+  exact hcontract.fixedPoint_unique' (hfix η hη).symm
+    (hfix (D v) (fderiv_lyapunovPerronSolution_apply hs hu hα hN hsmall hNs hN' hδ hξ₀ v)).symm
 
 /-- **The Lyapunov--Perron graph map is `C¹`** at every input parameter whose Lyapunov--Perron
 solution stays a positive distance inside a set on which `N` is differentiable with uniformly
