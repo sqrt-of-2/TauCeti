@@ -7,7 +7,7 @@ module
 
 import TauCeti.Topology.Algebra.ContinuousMonoidHom
 import TauCeti.GroupTheory.PGroup
-public import TauCeti.Topology.Algebra.Group.Profinite.EmbeddingProblem.Projective
+public import TauCeti.Topology.Algebra.Group.Profinite.EmbeddingProblem.Projective.Basic
 public import TauCeti.Topology.Algebra.Group.Profinite.Free.Pointed.Basic
 
 /-!

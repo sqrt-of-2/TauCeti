@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Topology.Algebra.Group.Profinite.EmbeddingProblem.Projective
+public import TauCeti.Topology.Algebra.Group.Profinite.EmbeddingProblem.Projective.Basic
 public import TauCeti.Topology.Algebra.Group.Profinite.ProP.Extension
 public import TauCeti.Topology.Algebra.GroupExtension.Splitting
 
