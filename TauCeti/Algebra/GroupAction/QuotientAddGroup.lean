@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Group.Subgroup.ZPowers.Basic
+public import Mathlib.GroupTheory.GroupAction.Hom
 public import Mathlib.Algebra.GroupWithZero.Action.Defs
 public import Mathlib.GroupTheory.QuotientGroup.Defs
 
@@ -29,6 +30,7 @@ by `G` modulo `N`, which is what lets a `G`-stable subgroup be enlarged one elem
 * `AddSubgroup.restrictDistribMulAction_coe_smul`: its defining equation `↑(g • x) = g • ↑x`.
 * `AddSubgroup.quotientDistribMulAction`: the action of `G` on `M ⧸ N` for a `G`-stable `N`.
 * `AddSubgroup.quotientDistribMulAction_smul_mk`: its defining equation `g • ↑x = ↑(g • x)`.
+* `TauCeti.quotientDistribMulActionMkQ`: the bundled equivariant quotient projection.
 * `AddSubgroup.subquotientDistribMulAction`: the induced action on `K ⧸ N.addSubgroupOf K`
   for two stable subgroups `N` and `K`, the quotient action for the restricted action on `K`.
 * `TauCeti.smul_mem_sup_zmultiples`: if `N` is `G`-stable and `g • x - x ∈ N` for every `g`,
@@ -96,6 +98,23 @@ theorem _root_.AddSubgroup.quotientDistribMulAction_smul_mk (N : AddSubgroup M)
     letI := N.quotientDistribMulAction hN
     g • (x : M ⧸ N) = ((g • x : M) : M ⧸ N) :=
   rfl
+
+/-- The canonical equivariant additive projection onto a quotient by a stable subgroup. -/
+def quotientDistribMulActionMkQ (N : AddSubgroup M)
+    (hN : ∀ g : G, ∀ x ∈ N, g • x ∈ N) :
+    letI := N.quotientDistribMulAction hN
+    M →+[G] (M ⧸ N) :=
+  letI := N.quotientDistribMulAction hN
+  { QuotientAddGroup.mk' N with
+    map_smul' := fun g x ↦ (N.quotientDistribMulAction_smul_mk hN g x).symm }
+
+/-- The function underlying the equivariant quotient projection is the additive projection. -/
+@[simp]
+theorem coe_quotientDistribMulActionMkQ (N : AddSubgroup M)
+    (hN : ∀ g : G, ∀ x ∈ N, g • x ∈ N) :
+    letI := N.quotientDistribMulAction hN
+    ⇑(quotientDistribMulActionMkQ N hN) = QuotientAddGroup.mk' N :=
+  (rfl)
 
 /-- The induced action on `K ⧸ N.addSubgroupOf K` for two `G`-stable additive subgroups: the
 quotient action `AddSubgroup.quotientDistribMulAction` for the restricted action

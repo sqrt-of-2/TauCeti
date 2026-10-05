@@ -144,13 +144,9 @@ theorem reductionK0_quotSMulTop (ρ : Representation ℤ G W) (r : ℤ)
   -- Integer pointwise scaling on submodules uses the canonical integer action, which
   -- agrees only propositionally with the supplied `Module ℤ W` instance.
   cases Subsingleton.elim ‹Module ℤ W› (AddCommGroup.toIntModule W)
-  let q : IntertwiningMap ρ (ρ.quotSMulTop r) :=
-    { toLinearMap := (r • (⊤ : Submodule ℤ W)).mkQ
-      isIntertwining' g := by
-        ext x
-        simp [LinearMap.comp_apply, Submodule.mkQ_apply] }
+  let q := quotSMulTopMkQ ρ r
   have hq : Function.Bijective (q.baseChange k) := by
-    rw [coe_intertwiningMap_baseChange]
+    rw [coe_intertwiningMap_baseChange, toLinearMap_quotSMulTopMkQ]
     exact bijective_lTensor_mkQ_smul_top_of_algebraMap_eq_zero r (by simpa using hr)
   exact (reductionK0_congr_of_equiv_baseChange k ((q.baseChange k).ofBijective hq)).symm
 

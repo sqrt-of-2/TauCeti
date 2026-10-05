@@ -25,6 +25,7 @@ groups modelled on them.
 ## Main definitions
 
 * `Representation.quotSMulTop`: the representation induced by `ρ` on `V ⧸ r • V`.
+* `TauCeti.quotSMulTopMkQ`: the canonical intertwining projection onto the scalar quotient.
 * `Representation.IntertwiningMap.quotSMulTop`: the reduction modulo `r` of an intertwining map.
 
 ## Main statements
@@ -99,3 +100,25 @@ theorem quotSMulTop_forall_eq_sum (φ : V →ₗ[k] V) (hφ : ∀ x, x = ∑ g :
 end Group
 
 end Representation
+
+namespace TauCeti
+
+variable {k G V : Type*} [CommRing k] [Monoid G] [AddCommGroup V] [Module k V]
+
+open scoped Pointwise
+
+/-- The canonical intertwining projection from a representation to its scalar quotient. -/
+noncomputable def quotSMulTopMkQ (ρ : Representation k G V) (r : k) :
+    Representation.IntertwiningMap ρ (ρ.quotSMulTop r) where
+  toLinearMap := (r • (⊤ : Submodule k V)).mkQ
+  isIntertwining' g := by
+    ext x
+    simp [LinearMap.comp_apply, Submodule.mkQ_apply]
+
+/-- The linear map underlying the scalar-quotient projection is the submodule projection. -/
+@[simp]
+theorem toLinearMap_quotSMulTopMkQ (ρ : Representation k G V) (r : k) :
+    (quotSMulTopMkQ ρ r).toLinearMap = (r • (⊤ : Submodule k V)).mkQ :=
+  (rfl)
+
+end TauCeti

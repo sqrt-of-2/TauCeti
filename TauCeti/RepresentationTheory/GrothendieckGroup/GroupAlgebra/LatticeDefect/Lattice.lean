@@ -95,14 +95,16 @@ theorem reductionK0_eq_of_injective_of_finite_quotient_range {V W : Type u}
     obtain ⟨y, rfl⟩ := hx
     exact ⟨g • y, map_smul f g y⟩
   let : DistribMulAction G (W ⧸ N) := N.quotientDistribMulAction hN
-  let q : W →+[G] (W ⧸ N) :=
-    { QuotientAddGroup.mk' N with
-      map_smul' := fun g x ↦ (N.quotientDistribMulAction_smul_mk hN g x).symm }
-  have hex : Exact f q := AddMonoidHom.exact_iff.mpr (QuotientAddGroup.ker_mk' N)
+  let q := quotientDistribMulActionMkQ N hN
+  have hex : Exact f q := by
+    rw [coe_quotientDistribMulActionMkQ]
+    exact AddMonoidHom.exact_iff.mpr (QuotientAddGroup.ker_mk' N)
   rw [← latticeDefect_eq_reductionK0_of_subsingleton_torsionBy k G ℓ V (by simp),
     ← latticeDefect_eq_reductionK0_of_subsingleton_torsionBy k G ℓ W (by simp)]
   exact latticeDefect_eq_of_exact_of_finite k G ℓ f q hf hex
-    (QuotientAddGroup.mk'_surjective N)
+    (by
+      rw [coe_quotientDistribMulActionMkQ]
+      exact QuotientAddGroup.mk'_surjective N)
 
 /-- Integral lattices with equivalent rationalizations have equal reduction classes in prime
 characteristic. Their reductions themselves need not be equivalent representations. -/
