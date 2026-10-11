@@ -26,6 +26,10 @@ and the inversion laws `X(u⁻¹) = X(u)` and `Y(u⁻¹) = -Y(u) - X(u)`. These 
 analytic coordinates used to construct the map from the multiplicative group modulo `q^ℤ`
 to the Tate curve. The Weierstrass equation and the homomorphism property are not proved here.
 
+The periodicity lemmas let `simp` remove leading factors `q ^ k` for `k : ℤ`, `q ^ n` for
+`n : ℕ`, `q`, and `q⁻¹` from the parameter. The natural-power, single-factor, and
+inverse-factor lemmas cover the simplified forms of integer powers.
+
 The coordinates are intended for `u ∉ q^ℤ`. The definitions are total: at an element of
 `q^ℤ`, the summand with zero denominator is zero by the field's inverse convention. Such
 values do not represent the point at infinity and are not asserted to lie on the curve.
