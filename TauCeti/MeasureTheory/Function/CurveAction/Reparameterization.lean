@@ -7,7 +7,6 @@ module
 
 public import TauCeti.MeasureTheory.Function.CurveAction.Basic
 public import TauCeti.MeasureTheory.Function.MetricDerivative.Reparameterization
-import TauCeti.MeasureTheory.Integral.IntervalIntegral.Affine
 
 /-!
 # Affine reparameterization of curve action
@@ -41,19 +40,8 @@ theorem curveAction_comp_mul_add (p : ℝ) (γ : ℝ → X) {c : ℝ} (hc : c �
     (d a b : ℝ) :
     curveAction p (fun t ↦ γ (c * t + d)) a b =
       ENNReal.ofReal |c| ^ (p - 1) * curveAction p γ (c * a + d) (c * b + d) := by
-  have h0 : ENNReal.ofReal |c| ≠ 0 := by simpa using hc
-  have hscale : ENNReal.ofReal |c| ^ p * ENNReal.ofReal |c⁻¹| =
-      ENNReal.ofReal |c| ^ (p - 1) := by
-    simp [abs_inv, ENNReal.ofReal_inv_of_pos (abs_pos.2 hc),
-      ENNReal.rpow_sub p 1 h0 ENNReal.ofReal_ne_top, div_eq_mul_inv]
-  rw [curveAction_def, curveAction_def]
-  have hpow (t : ℝ) : (ENNReal.ofReal |c| * metricDerivative γ (c * t + d)) ^ p =
-      ENNReal.ofReal |c| ^ p * metricDerivative γ (c * t + d) ^ p := by
-    simp [ENNReal.mul_rpow_eq_ite, h0]
-  simp_rw [metricDerivative_comp_mul_add γ c, hpow]
-  rw [lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_ne_zero h0 ENNReal.ofReal_ne_top)]
-  rw [setLIntegral_comp_mul_add_uIoc (fun t ↦ metricDerivative γ t ^ p) hc d a b]
-  rw [← mul_assoc, hscale]
+  simpa only [curveAction_def] using
+    setLIntegral_metricDerivative_comp_mul_add_rpow p γ hc d a b
 
 /-- Finite action is invariant under invertible affine changes of time. -/
 @[simp]
