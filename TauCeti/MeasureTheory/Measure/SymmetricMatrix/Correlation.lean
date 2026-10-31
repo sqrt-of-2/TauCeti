@@ -54,9 +54,9 @@ positive-semidefinite correlation matrices with zero determinant, is Lebesgue-nu
   `TauCeti.map_symmetricCongruenceLinearMap_diagonal_correlationLebesgue` — invariance under
   permutation and sign-change conjugation.
 * `TauCeti.posDefCorrelationRegion` — the coordinates of positive-definite correlation matrices.
-* `TauCeti.partialCorrelationCoordinates` — the continuous partial-correlation forward map,
-  smooth and injective on the open cube, with values in the positive-definite correlation region.
-* `TauCeti.coe_correlationMatrix_partialCorrelationCoordinates` — reconstruction of
+* `TauCeti.correlationCoordinatesOfPartialCorrelation` — the continuous partial-correlation
+  forward map, smooth and injective on the open cube, with values in the positive-definite region.
+* `TauCeti.coe_correlationMatrix_correlationCoordinatesOfPartialCorrelation` — reconstruction of
   partial-correlation Gram matrices from their correlation coordinates on the closed cube.
 * `TauCeti.volume_posDefCorrelationRegion_pos`, `TauCeti.volume_posDefCorrelationRegion_lt_top`.
 * `TauCeti.closure_posDefCorrelationRegion` — the closure is the positive-semidefinite region.
@@ -308,62 +308,66 @@ theorem zero_mem_posDefCorrelationRegion : (0 : strictLowerTriangle p → ℝ) �
 /-- The strictly lower coordinates of the Gram matrix constructed from partial correlations.
 On the open cube this maps into the positive-definite correlation region. Outside the cube,
 it retains the square-root totalization of `TauCeti.partialCorrelationGram`. -/
-def partialCorrelationCoordinates (z : strictLowerTriangle p → ℝ) : strictLowerTriangle p → ℝ :=
+def correlationCoordinatesOfPartialCorrelation (z : strictLowerTriangle p → ℝ) :
+    strictLowerTriangle p → ℝ :=
   correlationCoordinates p
     ⟨partialCorrelationGram z,
       Matrix.isHermitian_iff_isSelfAdjoint.1 (posSemidef_partialCorrelationGram z).isHermitian⟩
 
 /-- A coordinate of the forward map is the corresponding strictly lower Gram entry. -/
 @[simp]
-theorem partialCorrelationCoordinates_apply (z : strictLowerTriangle p → ℝ)
+theorem correlationCoordinatesOfPartialCorrelation_apply (z : strictLowerTriangle p → ℝ)
     (ij : strictLowerTriangle p) :
-    partialCorrelationCoordinates z ij = partialCorrelationGram z ij.1.1 ij.1.2 := (rfl)
+    correlationCoordinatesOfPartialCorrelation z ij =
+      partialCorrelationGram z ij.1.1 ij.1.2 := (rfl)
 
 /-- On the closed partial-correlation cube, reconstruction from correlation coordinates
 returns the original Gram matrix. -/
 @[simp]
-theorem coe_correlationMatrix_partialCorrelationCoordinates {z : strictLowerTriangle p → ℝ}
-    (hz : ∀ ij, |z ij| ≤ 1) :
-    (correlationMatrix p (partialCorrelationCoordinates z) : Matrix (Fin p) (Fin p) ℝ) =
+theorem coe_correlationMatrix_correlationCoordinatesOfPartialCorrelation
+    {z : strictLowerTriangle p → ℝ} (hz : ∀ ij, |z ij| ≤ 1) :
+    (correlationMatrix p (correlationCoordinatesOfPartialCorrelation z) :
+      Matrix (Fin p) (Fin p) ℝ) =
       partialCorrelationGram z := by
   exact congrArg Subtype.val
     (correlationMatrix_correlationCoordinates (partialCorrelationGram_apply_self hz))
 
 /-- The partial-correlation forward map sends the open cube into the positive-definite
 correlation region. -/
-theorem mapsTo_partialCorrelationCoordinates :
-    MapsTo (partialCorrelationCoordinates (p := p)) {z | ∀ ij, |z ij| < 1}
+theorem mapsTo_correlationCoordinatesOfPartialCorrelation :
+    MapsTo (correlationCoordinatesOfPartialCorrelation (p := p)) {z | ∀ ij, |z ij| < 1}
       (posDefCorrelationRegion p) := by
   intro z hz
   rw [mem_posDefCorrelationRegion,
-    coe_correlationMatrix_partialCorrelationCoordinates (fun ij ↦ (hz ij).le)]
+    coe_correlationMatrix_correlationCoordinatesOfPartialCorrelation (fun ij ↦ (hz ij).le)]
   exact posDef_partialCorrelationGram hz
 
 /-- The partial-correlation forward map is injective on the open cube. -/
-theorem injOn_partialCorrelationCoordinates :
-    InjOn (partialCorrelationCoordinates (p := p)) {z | ∀ ij, |z ij| < 1} := by
+theorem injOn_correlationCoordinatesOfPartialCorrelation :
+    InjOn (correlationCoordinatesOfPartialCorrelation (p := p)) {z | ∀ ij, |z ij| < 1} := by
   intro z hz w hw heq
   apply injOn_partialCorrelationGram hz hw
   have h := congrArg (fun x ↦ (correlationMatrix p x : Matrix (Fin p) (Fin p) ℝ)) heq
-  rwa [coe_correlationMatrix_partialCorrelationCoordinates (fun ij ↦ (hz ij).le),
-    coe_correlationMatrix_partialCorrelationCoordinates (fun ij ↦ (hw ij).le)] at h
+  rwa [coe_correlationMatrix_correlationCoordinatesOfPartialCorrelation (fun ij ↦ (hz ij).le),
+    coe_correlationMatrix_correlationCoordinatesOfPartialCorrelation (fun ij ↦ (hw ij).le)] at h
 
 /-- The partial-correlation forward map is continuous on the entire coordinate space. -/
 @[fun_prop]
-theorem continuous_partialCorrelationCoordinates :
-    Continuous (partialCorrelationCoordinates (p := p)) := by
+theorem continuous_correlationCoordinatesOfPartialCorrelation :
+    Continuous (correlationCoordinatesOfPartialCorrelation (p := p)) := by
   apply continuous_pi
   intro ij
-  simp only [partialCorrelationCoordinates_apply]
+  simp only [correlationCoordinatesOfPartialCorrelation_apply]
   exact (continuous_apply ij.1.2).comp
     ((continuous_apply ij.1.1).comp continuous_partialCorrelationGram)
 
 /-- The partial-correlation forward map is smooth on the open cube. -/
-theorem contDiffOn_partialCorrelationCoordinates :
-    ContDiffOn ℝ ∞ (partialCorrelationCoordinates (p := p)) {z | ∀ ij, |z ij| < 1} := by
+theorem contDiffOn_correlationCoordinatesOfPartialCorrelation :
+    ContDiffOn ℝ ∞ (correlationCoordinatesOfPartialCorrelation (p := p))
+      {z | ∀ ij, |z ij| < 1} := by
   apply contDiffOn_pi.2
   intro ij
-  simp only [partialCorrelationCoordinates_apply]
+  simp only [correlationCoordinatesOfPartialCorrelation_apply]
   exact contDiffOn_pi.1 (contDiffOn_pi.1 contDiffOn_partialCorrelationGram ij.1.1) ij.1.2
 
 /-- Every off-diagonal entry of a positive-definite correlation matrix lies in `(-1, 1)`: its
