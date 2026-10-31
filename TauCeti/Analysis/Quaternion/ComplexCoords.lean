@@ -37,7 +37,7 @@ public section
 
 open Quaternion
 
-namespace TauCeti
+namespace Quaternion
 
 /-- The coordinates `(t + i x, y + i z)` adapted to left complex multiplication. -/
 noncomputable def leftComplexCoords : ℍ ≃L[ℝ] ℂ × ℂ :=
@@ -52,7 +52,7 @@ noncomputable def leftComplexCoords : ℍ ≃L[ℝ] ℂ × ℂ :=
 
 -- Coordinate expansions are explicit: simp preserves the coordinate maps so that it can use
 -- their multiplication and scalar-action rules without expanding into real components.
-theorem _root_.Quaternion.leftComplexCoords_apply (q : ℍ) :
+theorem leftComplexCoords_apply (q : ℍ) :
     leftComplexCoords q = (⟨q.re, q.imI⟩, ⟨q.imJ, q.imK⟩) := (rfl)
 
 theorem leftComplexCoords_symm_apply (z : ℂ × ℂ) :
@@ -63,7 +63,7 @@ noncomputable def rightComplexCoords : ℍ ≃L[ℝ] ℂ × ℂ :=
   leftComplexCoords.trans
     ((ContinuousLinearEquiv.refl ℝ ℂ).prodCongr Complex.conjCLE)
 
-theorem _root_.Quaternion.rightComplexCoords_apply (q : ℍ) :
+theorem rightComplexCoords_apply (q : ℍ) :
     rightComplexCoords q = (⟨q.re, q.imI⟩, ⟨q.imJ, -q.imK⟩) := by
   apply Prod.ext <;> apply Complex.ext <;>
     simp [rightComplexCoords, leftComplexCoords_apply]
@@ -74,7 +74,7 @@ theorem rightComplexCoords_symm_apply (z : ℂ × ℂ) :
   simp [rightComplexCoords_apply]
 
 /-- The two coordinate choices differ by conjugation of the second component. -/
-theorem _root_.Quaternion.leftComplexCoords_eq_prodMap_star_rightComplexCoords (q : ℍ) :
+theorem leftComplexCoords_eq_prodMap_star_rightComplexCoords (q : ℍ) :
     leftComplexCoords q = Prod.map id star (rightComplexCoords q) := by
   apply Prod.ext <;> apply Complex.ext <;>
     simp [leftComplexCoords_apply, rightComplexCoords_apply]
@@ -87,7 +87,7 @@ theorem rightComplexCoords_leftComplexCoords_symm (z : ℂ × ℂ) :
     (leftComplexCoords_eq_prodMap_star_rightComplexCoords (leftComplexCoords.symm z))).symm
 
 /-- Reconstruction in the convention `q = v + j w`. -/
-theorem _root_.Quaternion.eq_coeComplex_add_j_mul (q : ℍ) :
+theorem eq_coeComplex_add_j_mul (q : ℍ) :
     q = ((rightComplexCoords q).1 : ℍ) +
       (⟨0, 0, 1, 0⟩ : ℍ) * ((rightComplexCoords q).2 : ℍ) := by
   ext <;> simp [rightComplexCoords_apply]
@@ -148,12 +148,6 @@ theorem rightComplexCoords_symm_smul (c : ℂ) (z : ℂ × ℂ) :
   apply rightComplexCoords.injective
   simp only [ContinuousLinearEquiv.apply_symm_apply, rightComplexCoords_mul_coeComplex]
 
-end TauCeti
-
-namespace Quaternion
-
-open TauCeti
-
 /-- Right quaternion multiplication, complex-linear in the left coordinates. -/
 noncomputable def mulRightComplex (b : ℍ) : (ℂ × ℂ) →L[ℂ] ℂ × ℂ :=
   LinearMap.toContinuousLinearMap
@@ -206,8 +200,6 @@ end Quaternion
 
 namespace HasFDerivAt
 
-open TauCeti
-
 /-- A real right-multiplication derivative becomes a complex derivative in left coordinates. -/
 theorem leftComplexCoords {f : ℍ → ℍ} {q b : ℍ}
     (hf : HasFDerivAt f ((ContinuousLinearMap.mul ℝ ℍ).flip b) q) :
@@ -215,8 +207,8 @@ theorem leftComplexCoords {f : ℍ → ℍ} {q b : ℍ}
       (mulRightComplex b) (leftComplexCoords q) := by
   apply hasFDerivAt_of_restrictScalars (𝕜 := ℝ)
     (g' := (mulRightComplex b).restrictScalars ℝ)
-  · rw [mulRightComplex_restrictScalars, TauCeti.leftComplexCoords.comp_hasFDerivAt_iff,
-      TauCeti.leftComplexCoords.symm.comp_right_hasFDerivAt_iff]
+  · rw [mulRightComplex_restrictScalars, Quaternion.leftComplexCoords.comp_hasFDerivAt_iff,
+      Quaternion.leftComplexCoords.symm.comp_right_hasFDerivAt_iff]
     simpa only [ContinuousLinearEquiv.symm_apply_apply] using hf
   · rfl
 
@@ -227,8 +219,8 @@ theorem rightComplexCoords {f : ℍ → ℍ} {q a : ℍ}
       (mulLeftComplex a) (rightComplexCoords q) := by
   apply hasFDerivAt_of_restrictScalars (𝕜 := ℝ)
     (g' := (mulLeftComplex a).restrictScalars ℝ)
-  · rw [mulLeftComplex_restrictScalars, TauCeti.rightComplexCoords.comp_hasFDerivAt_iff,
-      TauCeti.rightComplexCoords.symm.comp_right_hasFDerivAt_iff]
+  · rw [mulLeftComplex_restrictScalars, Quaternion.rightComplexCoords.comp_hasFDerivAt_iff,
+      Quaternion.rightComplexCoords.symm.comp_right_hasFDerivAt_iff]
     simpa only [ContinuousLinearEquiv.symm_apply_apply] using hf
   · rfl
 
