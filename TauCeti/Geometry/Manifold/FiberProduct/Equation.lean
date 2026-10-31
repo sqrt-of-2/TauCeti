@@ -151,16 +151,7 @@ theorem isRegularPoint_fiberProductEquation_iff
       (mfderiv IX IN f p.1).range ⊔
         (((tangentSpaceCast IN (g p.2) (f p.1)).toContinuousLinearMap).comp
           (mfderiv IY IN g p.2)).range = ⊤ := by
-  -- The canonical identification of the target tangent space preserves surjectivity.
-  have hreg : TauCeti.IsRegularPoint (IX.prod IY) 𝓘(𝕜, EN)
-      (φ.fiberProductEquation f g) p ↔
-      Surjective (mvfderiv (IX.prod IY) (φ.fiberProductEquation f g) p) := by
-    rw [TauCeti.isRegularPoint_iff]
-    symm
-    simpa only [mvfderiv, ContinuousLinearMap.coe_comp, ContinuousLinearEquiv.coe_coe] using
-      EquivLike.comp_surjective (mfderiv (IX.prod IY) 𝓘(𝕜, EN) (φ.fiberProductEquation f g) p)
-        (NormedSpace.fromTangentSpace (φ.fiberProductEquation f g p))
-  rw [hreg]
+  rw [TauCeti.isRegularPoint_iff_surjective_mvfderiv]
   let Df := mfderiv IX IN f p.1
   let Dg := ((tangentSpaceCast IN (g p.2) (f p.1)).toContinuousLinearMap).comp
     (mfderiv IY IN g p.2)
@@ -207,11 +198,7 @@ theorem finrank_ker_mvfderiv_fiberProductEquation
   have hs := (φ.isRegularPoint_fiberProductEquation_iff hn hf hg hfg hx).2 htrans
   have hd := hs.finrank_ker_mfderiv_add_finrank
   rw [Module.finrank_prod] at hd
-  -- `mvfderiv` composes `mfderiv` with the canonical target tangent-space equivalence.
-  have hker : (mvfderiv (IX.prod IY) (φ.fiberProductEquation f g) p).ker =
-      (mfderiv (IX.prod IY) 𝓘(𝕜, EN) (φ.fiberProductEquation f g) p).ker :=
-    (NormedSpace.fromTangentSpace (φ.fiberProductEquation f g p)).toLinearEquiv.ker_comp _
-  rw [hker]
+  rw [TauCeti.ker_mvfderiv]
   omega
 
 end PartialDiffeomorph
