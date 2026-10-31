@@ -7,7 +7,7 @@ module
 
 public import Mathlib.RingTheory.Teichmuller
 public import TauCeti.RingTheory.Huber.Pair
-public import TauCeti.RingTheory.Perfectoid.UniformTilt
+public import TauCeti.RingTheory.Perfectoid.UniformTilt.Basic
 
 /-!
 # The integral tilt of a complete uniform Tate ring
