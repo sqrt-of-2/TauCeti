@@ -59,35 +59,25 @@ theorem exists_equivariant_contMDiff_chart
   let : ContinuousConstSMul G M := ⟨fun g => (hsmooth g).continuous⟩
   let : Invertible (Fintype.card G : 𝕜) :=
     invertibleOfNonzero (Nat.cast_ne_zero.mpr Fintype.card_ne_zero)
-  let χ := (chartAt H x).transHomeomorph I.toHomeomorph
-  have hxχ : x ∈ χ.source := mem_chart_source H x
-  have hχ : ⇑χ = extChartAt I x := by ext; simp [χ]
-  have hχs : ⇑χ.symm = (extChartAt I x).symm := by ext; simp [χ]
+  -- Choose manifold coordinates and the derivative representation once for both linearizations.
+  obtain ⟨χ, σ, hxχ, hχ, hχs, hχsource, hχt, hσ⟩ :=
+    exists_chart_isotropyRepresentation (fun g => (hsmooth g x).of_le hn) hx
   have hχsmooth : ContMDiffOn I 𝓘(𝕜, E) n χ χ.source := by
-    simpa [hχ, χ] using (contMDiffOn_extChartAt (I := I) (n := n) (x := x))
+    simpa only [hχ, hχsource, extChartAt_source] using
+      (contMDiffOn_extChartAt (I := I) (n := n) (x := x))
   have hχsymm : ContMDiffOn 𝓘(𝕜, E) I n χ.symm χ.target := by
-    simpa [hχs, χ, ModelWithCorners.toHomeomorph, I.range_eq_univ] using
-      (contMDiffOn_extChartAt_symm (I := I) (n := n) x)
-  have hL (g : G) : HasStrictFDerivAt (χ ∘ (g • ·) ∘ χ.symm)
-      (fderiv 𝕜 (χ ∘ (g • ·) ∘ χ.symm) (χ x)) (χ x) := by
-    have h := ((hsmooth g x).of_le hn).hasStrictFDerivAt_extChartAt_conj
-    rw [hx g] at h
-    rwa [hχ, hχs]
-  let σ := isotropyRepresentation hxχ hx fun g => (hL g).differentiableAt
-  have hσ (g : G) : HasStrictFDerivAt (χ ∘ (g • ·) ∘ χ.symm) (σ g) (χ x) :=
-    hasStrictFDerivAt_conj_smul_isotropyRepresentation hxχ hx hL g
+    simpa only [hχs, hχt] using (contMDiffOn_extChartAt_symm (I := I) (n := n) x)
+  -- Average on the invariant part of the original chart, where every summand is smooth.
   let A := σ.bochnerAverage (fun z => χ z - χ x)
   have hA : HasStrictFDerivAt (A ∘ χ.symm) (ContinuousLinearMap.id 𝕜 E) (χ x) := by
     exact ContRepresentation.hasStrictFDerivAt_bochnerAverage_comp_of_intertwining
       fun g => by
         simpa only [ContinuousLinearMap.comp_id, Function.comp_def] using (hσ g).sub_const (χ x)
-  -- All translates must stay in the original chart before averaging its coordinates.
-  let U : Set M := ⋂ g : G, (g • ·) ⁻¹' χ.source
-  have hU : IsOpen U := isOpen_iInter_of_finite fun g =>
-    χ.open_source.preimage (continuous_const_smul g)
-  have hxU : x ∈ U := by simp [U, hx, hxχ]
+  let U := (χ.restrInvariant G).source
+  have hxU : x ∈ U := χ.mem_restrInvariant_source_iff.mpr fun g => by
+    simpa only [hx g] using hxχ
   let V := χ.target ∩ χ.symm ⁻¹' U
-  have hV : IsOpen V := χ.isOpen_inter_preimage_symm hU
+  have hV : IsOpen V := χ.isOpen_inter_preimage_symm (χ.restrInvariant G).open_source
   have hxV : χ x ∈ V := ⟨χ.map_source hxχ, by simpa [χ.left_inv hxχ] using hxU⟩
   have hAsmooth : ContDiffOn 𝕜 n (A ∘ χ.symm) V := by
     apply ContRepresentation.contDiffOn_bochnerAverage_comp
@@ -96,8 +86,9 @@ theorem exists_equivariant_contMDiff_chart
       hχsmooth.comp
         (((hsmooth g).contMDiffOn (s := Set.univ)).comp (hχsymm.mono inter_subset_left)
           (fun _ _ => mem_univ _))
-        (fun z hz => mem_iInter.mp hz.2 g)
+        (fun z hz => χ.mem_restrInvariant_source_iff.mp hz.2 g)
     exact hg.contDiffOn.sub contDiffOn_const
+  -- The smooth inverse function theorem supplies smoothness on the entire target.
   obtain ⟨Θ, hΘ, hxΘ, hΘV, hΘsymm⟩ :=
     TauCeti.ContDiffOn.exists_openPartialHomeomorph hAsmooth hV hxV hn
       (e := ContinuousLinearEquiv.refl 𝕜 E) hA.hasFDerivAt.fderiv.symm
@@ -107,33 +98,22 @@ theorem exists_equivariant_contMDiff_chart
       (hχsmooth.mono inter_subset_left) inter_subset_right
   have he₀symm : ContMDiffOn 𝓘(𝕜, E) I n e₀.symm e₀.target :=
     hχsymm.comp (hΘsymm.contMDiffOn.mono inter_subset_left) inter_subset_right
-  -- Intersect the finitely many translates of the inverse-function neighbourhood.
-  let W : Set M := ⋂ g : G, (g • ·) ⁻¹' e₀.source
-  have hW : IsOpen W := isOpen_iInter_of_finite fun g =>
-    e₀.open_source.preimage (continuous_const_smul g)
-  let e := e₀.restrOpen W hW
-  have hmem {z : M} : z ∈ e.source ↔ ∀ g : G, g • z ∈ e₀.source := by
-    simp only [e, OpenPartialHomeomorph.restrOpen_source, W, mem_inter_iff,
-      mem_iInter, mem_preimage]
-    exact ⟨And.right, fun h => ⟨by simpa using h 1, h⟩⟩
-  have hxe : x ∈ e.source := hmem.mpr fun g => by
-    rw [hx g]
-    exact ⟨hxχ, hxΘ⟩
-  have hmaps {z : M} (hz : z ∈ e.source) (g : G) : g • z ∈ e.source := by
-    apply hmem.mpr
-    intro h
-    simpa [mul_smul] using hmem.mp hz (h * g)
-  have heA {z : M} (hz : z ∈ e.source) : e z = A z := by
-    simp only [e, e₀, OpenPartialHomeomorph.coe_restrOpen, OpenPartialHomeomorph.coe_trans,
-      hΘ, Function.comp_apply, χ.left_inv hz.1.1]
-  refine ⟨σ, e, hxe, ?_, he₀smooth.mono inter_subset_left,
-    he₀symm.mono inter_subset_left, fun g z hz => ⟨hmaps hz g, ?_⟩,
+  -- Use the common Bochner restriction to retain equivariance without losing smoothness.
+  let e := χ.bochnerChart (G := G) Θ
+  have hΘeq : EqOn Θ (A ∘ χ.symm) Θ.source := fun z _ => congrFun hΘ z
+  have hxe : x ∈ e.source := OpenPartialHomeomorph.mem_bochnerChart_source hx hxχ hxΘ
+  refine ⟨σ, e, hxe, ?_, ?_, ?_, fun g z hz =>
+      ⟨OpenPartialHomeomorph.smul_mem_bochnerChart_source hz g,
+        OpenPartialHomeomorph.bochnerChart_smul hΘeq hz g⟩,
     χ.map_eq_one_iff_mem_germKernel hxχ hx σ hσ⟩
-  · rw [heA hxe]
-    dsimp only [A]
-    rw [ContRepresentation.bochnerAverage_apply_of_forall_smul_eq _ _ hx, sub_self, map_zero]
-  · rw [heA (hmaps hz g), heA hz]
-    exact σ.bochnerAverage_smul _ g z
+  · rw [OpenPartialHomeomorph.bochnerChart_apply hΘeq hxe,
+      ContRepresentation.bochnerAverage_apply_of_forall_smul_eq _ _ hx, sub_self, map_zero]
+  · dsimp only [e]
+    rw [OpenPartialHomeomorph.bochnerChart_def, OpenPartialHomeomorph.restrInvariant_def]
+    exact he₀smooth.mono inter_subset_left
+  · dsimp only [e]
+    rw [OpenPartialHomeomorph.bochnerChart_def, OpenPartialHomeomorph.restrInvariant_def]
+    exact he₀symm.mono inter_subset_left
 
 end TauCeti
 

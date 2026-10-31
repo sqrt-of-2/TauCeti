@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Topology.Algebra.ConstMulAction
 public import Mathlib.Topology.OpenPartialHomeomorph.Continuity
+public import Mathlib.Topology.OpenPartialHomeomorph.IsImage
 
 /-!
 # Conjugating a monoid action by an open partial homeomorphism
@@ -18,11 +19,14 @@ the monoid structure: the identity acts as the identity
 (`OpenPartialHomeomorph.conj_one_smul_eventuallyEq`), and a product acts as the composite of the
 conjugates (`OpenPartialHomeomorph.conj_mul_smul_eventuallyEq`). These are the local identities
 behind the chain-rule computation of the derivative representation at a fixed point.
+
+`OpenPartialHomeomorph.restrInvariant` restricts a chart to the largest invariant open subset
+of its source for a finite monoid action.
 -/
 
 public section
 
-open Filter
+open Filter Set
 open scoped Topology
 
 namespace OpenPartialHomeomorph
@@ -51,5 +55,38 @@ theorem conj_mul_smul_eventuallyEq [ContinuousConstSMul G X] {x : X} (hx : x ∈
     exact χ.open_source.mem_nhds hhx
   filter_upwards [hmem] with w hw
   simp [χ.left_inv hw, mul_smul]
+
+section InvariantRestriction
+
+variable {Y : Type*} [TopologicalSpace Y]
+
+/-- Restrict a chart to the largest `G`-invariant open subset of its source. -/
+noncomputable def restrInvariant (e : OpenPartialHomeomorph X Y) (G : Type*) [Monoid G] [Finite G]
+    [MulAction G X] [ContinuousConstSMul G X] : OpenPartialHomeomorph X Y :=
+  e.restrOpen (⋂ g : G, (g • ·) ⁻¹' e.source)
+    (isOpen_iInter_of_finite fun g => e.open_source.preimage (continuous_const_smul g))
+
+/-- The invariant restriction is the open restriction to the intersection of all translates. -/
+theorem restrInvariant_def [Finite G] [ContinuousConstSMul G X] (e : OpenPartialHomeomorph X Y) :
+    e.restrInvariant G = e.restrOpen (⋂ g : G, (g • ·) ⁻¹' e.source)
+      (isOpen_iInter_of_finite fun g => e.open_source.preimage (continuous_const_smul g)) := (rfl)
+
+/-- A point belongs to the invariant restriction exactly when its whole orbit is in the source. -/
+@[simp]
+theorem mem_restrInvariant_source_iff [Finite G] [ContinuousConstSMul G X]
+    (e : OpenPartialHomeomorph X Y) {x : X} :
+    x ∈ (e.restrInvariant G).source ↔ ∀ g : G, g • x ∈ e.source := by
+  simp only [restrInvariant, restrOpen_source, mem_inter_iff, mem_iInter, mem_preimage]
+  exact ⟨And.right, fun h => ⟨by simpa using h 1, h⟩⟩
+
+/-- The source of an invariant restriction is invariant. -/
+theorem smul_mem_restrInvariant_source [Finite G] [ContinuousConstSMul G X]
+    (e : OpenPartialHomeomorph X Y) {x : X}
+    (hx : x ∈ (e.restrInvariant G).source) (g : G) : g • x ∈ (e.restrInvariant G).source := by
+  rw [mem_restrInvariant_source_iff] at hx ⊢
+  intro h
+  simpa [mul_smul] using hx (h * g)
+
+end InvariantRestriction
 
 end OpenPartialHomeomorph
