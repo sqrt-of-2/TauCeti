@@ -99,20 +99,22 @@ theorem exists_equivariant_contMDiff_chart
   have he₀symm : ContMDiffOn 𝓘(𝕜, E) I n e₀.symm e₀.target :=
     hχsymm.comp (hΘsymm.contMDiffOn.mono inter_subset_left) inter_subset_right
   -- Use the common Bochner restriction to retain equivariance without losing smoothness.
-  let e := χ.bochnerChart (G := G) Θ
+  let e := e₀.restrInvariant G
   have hΘeq : EqOn Θ (A ∘ χ.symm) Θ.source := fun z _ => congrFun hΘ z
-  have hxe : x ∈ e.source := OpenPartialHomeomorph.mem_bochnerChart_source hx hxχ hxΘ
+  have hxe : x ∈ e.source := e₀.mem_restrInvariant_source_iff.mpr fun g => by
+    simpa only [hx g, e₀, OpenPartialHomeomorph.trans_source, mem_inter_iff, mem_preimage] using
+      And.intro hxχ hxΘ
   refine ⟨σ, e, hxe, ?_, ?_, ?_, fun g z hz =>
-      ⟨OpenPartialHomeomorph.smul_mem_bochnerChart_source hz g,
+      ⟨e₀.smul_mem_restrInvariant_source hz g,
         OpenPartialHomeomorph.bochnerChart_smul hΘeq hz g⟩,
     χ.map_eq_one_iff_mem_germKernel hxχ hx σ hσ⟩
   · rw [OpenPartialHomeomorph.bochnerChart_apply hΘeq hxe,
       ContRepresentation.bochnerAverage_apply_of_forall_smul_eq _ _ hx, sub_self, map_zero]
   · dsimp only [e]
-    rw [OpenPartialHomeomorph.bochnerChart_def, OpenPartialHomeomorph.restrInvariant_def]
+    rw [OpenPartialHomeomorph.restrInvariant_def]
     exact he₀smooth.mono inter_subset_left
   · dsimp only [e]
-    rw [OpenPartialHomeomorph.bochnerChart_def, OpenPartialHomeomorph.restrInvariant_def]
+    rw [OpenPartialHomeomorph.restrInvariant_def]
     exact he₀symm.mono inter_subset_left
 
 end TauCeti
