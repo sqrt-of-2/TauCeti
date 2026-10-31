@@ -24,9 +24,9 @@ every matrix of nonzero weight has all entries bounded by `2n`. No elliptic, hyp
 parabolic weight identity is assumed. Substituting those identities into this formula is what
 converts it to the class-number and divisor-sum expression for the trace.
 
-The sum is over integral matrices, not projective classes. Each projective coefficient is the
-sum of the weights of its two representatives, so no additional factor of two occurs. This is
-distinct from the factor of two in the later transfer from `W_w` to cusp forms.
+The sum is over integral matrices, not projective classes. Each projective coefficient is
+`(weight A + weight (-A)) / 12`, so no additional factor of two occurs. This is distinct from
+the factor of two in the later transfer from `W_w` to cusp forms.
 
 ## Main results
 
