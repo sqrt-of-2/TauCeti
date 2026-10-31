@@ -242,9 +242,7 @@ theorem slope_lt_of_lt_stabilizationIndex
 prefix strictly below its final slope and storing that slope as a separate ray. -/
 noncomputable def toTerminalRay (hd : Filter.EventuallyConst d.slope Filter.atTop) :
     TerminalRaySlopeData Γ :=
-  let f : FiniteSlopeData Γ :=
-    ⟨d.start, d.initialHeight, d.stabilizationIndex hd, fun i => d.slope i,
-      fun _ _ h => d.monotone h⟩
+  let f := d.truncate (d.stabilizationIndex hd)
   { «prefix» := f.compress
     raySlope := d.slope (d.stabilizationIndex hd)
     lt_raySlope := by
@@ -253,13 +251,13 @@ noncomputable def toTerminalRay (hd : Filter.EventuallyConst d.slope Filter.atTo
         simpa only [FiniteSlopeData.compress_lengths] using
           Nat.pos_of_ne_zero (Finsupp.mem_support_iff.mp hm)
       obtain ⟨i, rfl⟩ := FiniteSlopeData.mem_slopeMultiset.mp (Multiset.count_pos.mp hm')
-      exact d.slope_lt_of_lt_stabilizationIndex hd i.isLt }
+      simpa only [f, truncate_slope] using d.slope_lt_of_lt_stabilizationIndex hd
+        (by simpa only [f, truncate_length] using i.isLt) }
 
 /-- The normalized prefix compresses precisely the slopes before stabilization. -/
 theorem toTerminalRay_prefix (hd : Filter.EventuallyConst d.slope Filter.atTop) :
     (d.toTerminalRay hd).prefix =
-      (⟨d.start, d.initialHeight, d.stabilizationIndex hd, fun i => d.slope i,
-        fun _ _ h => d.monotone h⟩ : FiniteSlopeData Γ).compress := (rfl)
+      (d.truncate (d.stabilizationIndex hd)).compress := (rfl)
 
 /-- The normalized ray has the slope at the first stabilization index. -/
 @[simp]
@@ -280,7 +278,7 @@ theorem expand_toTerminalRay (hd : Filter.EventuallyConst d.slope Filter.atTop) 
     have hs : ∀ j : Fin (d.toTerminalRay hd).prefix.expand.length,
         (d.toTerminalRay hd).prefix.expand.slope j = d.slope j := by
       rw [hp, FiniteSlopeData.expand_compress]
-      exact fun _ => rfl
+      simp only [truncate_slope, implies_true]
     exact hs _
   · rw [TerminalRaySlopeData.expand_slope_of_le _ (by omega), toTerminalRay_raySlope]
     exact (d.slope_eq_of_stabilizationIndex_le hd (by omega)).symm

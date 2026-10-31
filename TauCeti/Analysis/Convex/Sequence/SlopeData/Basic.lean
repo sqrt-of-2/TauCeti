@@ -243,6 +243,31 @@ theorem ext {d e : InfiniteSlopeData Γ} (hs : d.start = e.start)
   cases hm
   rfl
 
+/-- Keep the anchor and first `n` unit slopes of an infinite slope presentation.
+For `n = 0` the truncation is the singleton at the anchor. -/
+def truncate (d : InfiniteSlopeData Γ) (n : ℕ) : FiniteSlopeData Γ where
+  start := d.start
+  initialHeight := d.initialHeight
+  length := n
+  slope i := d.slope i
+  monotone _ _ h := d.monotone h
+
+@[simp]
+theorem truncate_start (d : InfiniteSlopeData Γ) (n : ℕ) :
+    (d.truncate n).start = d.start := (rfl)
+
+@[simp]
+theorem truncate_initialHeight (d : InfiniteSlopeData Γ) (n : ℕ) :
+    (d.truncate n).initialHeight = d.initialHeight := (rfl)
+
+@[simp]
+theorem truncate_length (d : InfiniteSlopeData Γ) (n : ℕ) :
+    (d.truncate n).length = n := (rfl)
+
+@[simp]
+theorem truncate_slope (d : InfiniteSlopeData Γ) (n : ℕ) (i : Fin (d.truncate n).length) :
+    (d.truncate n).slope i = d.slope i := (rfl)
+
 section AddCommMonoid
 
 variable [AddCommMonoid Γ] [AddCommMonoid Γ'] (d : InfiniteSlopeData Γ)
