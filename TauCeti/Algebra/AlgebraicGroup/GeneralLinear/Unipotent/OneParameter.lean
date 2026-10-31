@@ -144,6 +144,14 @@ theorem aeval_zero_comp_nilpotentOneParameterCoordinateMap (hX : IsNilpotent X) 
   rw [AlgHom.convOne_apply, Bialgebra.counitAlgHom_apply, Algebra.algebraMap_self,
     RingHom.id_apply]
 
+/-- The polynomial exponential curve satisfies the additive parameter law on base points. -/
+theorem aeval_comp_nilpotentOneParameterCoordinateMap_add (hX : IsNilpotent X) (s t : R) :
+    toConv ((Polynomial.aeval (s + t)).comp (nilpotentOneParameterCoordinateMap n hX)) =
+      toConv ((Polynomial.aeval s).comp (nilpotentOneParameterCoordinateMap n hX)) *
+        toConv ((Polynomial.aeval t).comp (nilpotentOneParameterCoordinateMap n hX)) := by
+  simp only [aeval_comp_nilpotentOneParameterCoordinateMap, toConv_ofConv]
+  simp only [← pointsMulEquiv_symm_apply, ← map_mul, ← ofAdd_add]
+
 section ClosedSubgroup
 
 variable [IsDomain R]

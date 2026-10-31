@@ -69,6 +69,10 @@ noncomputable def expPointAt {B : Type*} [CommRing B] [Algebra R B] (t : B) :
     WithConv (H →ₐ[R] B) :=
   WithConv.toConv ((aeval t).comp (expPointPolynomial d hd))
 
+/-- The exponential point is obtained by evaluating the polynomial coordinate map. -/
+theorem expPointAt_def {B : Type*} [CommRing B] [Algebra R B] (t : B) :
+    expPointAt d hd t = WithConv.toConv ((aeval t).comp (expPointPolynomial d hd)) := (rfl)
+
 /-- Evaluation of the polynomial-valued point gives the exponential curve. -/
 @[simp]
 theorem expPointAt_apply {B : Type*} [CommRing B] [Algebra R B] (t : B) (h : H) :
