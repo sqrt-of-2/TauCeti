@@ -140,6 +140,24 @@ theorem apply_deGiorgiInterpolant_le (hτ : 0 < τ) {n : ℕ}
     φ (deGiorgiInterpolant τ V t) ≤ φ (U n) :=
   apply_le_of_mem_moreauYosidaResolvent (deGiorgiInterpolant_mem_moreauYosidaResolvent hτ hV ht)
 
+/-- At every positive time, a variational interpolation along a minimizing movement sequence
+has energy at most the initial energy. -/
+theorem apply_deGiorgiInterpolant_le_initial (hτ : 0 < τ)
+    (hU : ∀ n, U (n + 1) ∈ moreauYosidaResolvent φ τ (U n))
+    (hV : ∀ n, ∀ r ∈ Ioc 0 (τ : ℝ), V n r ∈ moreauYosidaResolvent φ r.toNNReal (U n))
+    {t : ℝ} (ht : 0 < t) : φ (deGiorgiInterpolant τ V t) ≤ φ (U 0) := by
+  have hτ' : (0 : ℝ) < τ := hτ
+  have hc := (Nat.ceil_eq_iff (ne_of_gt (Nat.one_le_ceil_iff.2 (div_pos ht hτ')))).1
+    (rfl : ⌈t / τ⌉₊ = ⌈t / τ⌉₊)
+  have hn : ⌈t / τ⌉₊ - 1 + 1 = ⌈t / τ⌉₊ := by
+    have := Nat.one_le_ceil_iff.2 (div_pos ht hτ')
+    omega
+  have hmem : t ∈ Ioc ((⌈t / τ⌉₊ - 1 : ℕ) * τ : ℝ) (((⌈t / τ⌉₊ - 1 : ℕ) + 1) * τ) := by
+    rw [← Nat.cast_add_one, hn]
+    exact ⟨(lt_div_iff₀ hτ').1 hc.1, (div_le_iff₀ hτ').1 hc.2⟩
+  exact (apply_deGiorgiInterpolant_le hτ (hV _) hmem).trans
+    (antitone_comp_of_forall_mem_moreauYosidaResolvent hU (Nat.zero_le _))
+
 /-- **Distance along the variational interpolant.** On the time interval `(n τ, (n + 1) τ]`, the
 variational interpolant of a selection with `V n τ = U (n + 1)` stays within distance
 `d(U n, U (n + 1))` of `U n`, provided `φ (U n) ≠ ⊤` and `φ (U (n + 1)) ≠ ⊥`. -/
