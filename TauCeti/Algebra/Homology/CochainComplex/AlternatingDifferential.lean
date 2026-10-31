@@ -7,8 +7,7 @@ module
 
 public import Mathlib.Algebra.Homology.Embedding.Extend
 public import Mathlib.CategoryTheory.Preadditive.Basic
-public import Mathlib.Algebra.Ring.NegOnePow
-public import Mathlib.Tactic.Ring
+public import TauCeti.Algebra.Ring.NegOnePow
 
 /-!
 # Alternating differentials and the cap-product grading
@@ -70,13 +69,11 @@ def alternatingDifferentialIso (K : CochainComplex C ℤ) : K ≅ K.alternatingD
       intro i j hij
       have hj : i + 1 = j := hij
       subst j
-      have hexp : (i + 1) * (i + 1 + 1) / 2 = i * (i + 1) / 2 + (i + 1) := by
-        have h : (i + 1) * (i + 1 + 1) = i * (i + 1) + (i + 1) * 2 := by ring
-        rw [h, Int.add_mul_ediv_right _ _ (by decide)]
       apply (cancel_mono (K.alternatingDifferentialXIso (i + 1)).hom).1
       simp only [Preadditive.zsmul_comp, Category.assoc, alternatingDifferential_d,
         Preadditive.comp_zsmul, Iso.inv_hom_id_assoc, Iso.inv_hom_id,
-        Category.comp_id, smul_smul, hexp, Int.negOnePow_add, Units.val_mul])
+        Category.comp_id, smul_smul, Int.negOnePow_mul_succ_div_two_succ,
+        Units.val_mul, mul_comm])
 
 @[simp]
 theorem alternatingDifferentialIso_hom_f (K : CochainComplex C ℤ) (k : ℤ) :
@@ -140,7 +137,7 @@ theorem alternatingDifferentialNatIso_inv_app (K : CochainComplex C ℤ) :
 
 end CochainComplex
 
-namespace ChainComplex
+namespace TauCeti
 
 open CategoryTheory.Limits
 
@@ -150,41 +147,40 @@ variable {C : Type*} [Category* C] [Preadditive C] [HasZeroObject C]
 cochain complex differential `(-1)^(k+1) ∂` in degree `k`. The functor body is exposed to
 identify the object types in its map and comparison formulas. -/
 @[expose]
-noncomputable def capGradedFunctor (m : ℤ) : ChainComplex C ℕ ⥤ CochainComplex C ℤ :=
+noncomputable def extendIntLEAlternatingDifferentialFunctor (m : ℤ) :
+    ChainComplex C ℕ ⥤ CochainComplex C ℤ :=
   (ComplexShape.embeddingUpIntLE m).extendFunctor C ⋙
     CochainComplex.alternatingDifferentialFunctor
 
 @[simp]
-theorem capGradedFunctor_obj (m : ℤ) (K : ChainComplex C ℕ) :
-    (capGradedFunctor m).obj K =
+theorem extendIntLEAlternatingDifferentialFunctor_obj (m : ℤ) (K : ChainComplex C ℕ) :
+    (extendIntLEAlternatingDifferentialFunctor m).obj K =
       CochainComplex.alternatingDifferential
         (K.extend (ComplexShape.embeddingUpIntLE m)) := (rfl)
 
 @[simp]
-theorem capGradedFunctor_map (m : ℤ) {K L : ChainComplex C ℕ} (f : K ⟶ L) :
-    (capGradedFunctor m).map f = CochainComplex.alternatingDifferentialMap
+theorem extendIntLEAlternatingDifferentialFunctor_map (m : ℤ) {K L : ChainComplex C ℕ} (f : K ⟶ L) :
+    (extendIntLEAlternatingDifferentialFunctor m).map f = CochainComplex.alternatingDifferentialMap
       (HomologicalComplex.extendMap f (ComplexShape.embeddingUpIntLE m)) := (rfl)
 
-/-- Natural comparison from the unsigned zero extension to the cap-product grading.
+/-- Natural comparison from the unsigned zero extension to its alternating differential.
 It multiplies degree `k` by `(-1)^(k(k+1)/2)` under the canonical object identifications. -/
-noncomputable def capGradedNatIso (m : ℤ) :
-    (ComplexShape.embeddingUpIntLE m).extendFunctor C ≅ capGradedFunctor (C := C) m :=
-  NatIso.ofComponents
-    (fun K ↦ CochainComplex.alternatingDifferentialIso
-      (K.extend (ComplexShape.embeddingUpIntLE m)))
-    (fun f ↦ CochainComplex.alternatingDifferentialNatIso.hom.naturality
-      (HomologicalComplex.extendMap f (ComplexShape.embeddingUpIntLE m)))
+noncomputable def extendIntLEAlternatingDifferentialNatIso (m : ℤ) :
+    (ComplexShape.embeddingUpIntLE m).extendFunctor C ≅
+      extendIntLEAlternatingDifferentialFunctor (C := C) m :=
+  Functor.isoWhiskerLeft ((ComplexShape.embeddingUpIntLE m).extendFunctor C)
+    CochainComplex.alternatingDifferentialNatIso
 
 @[simp]
-theorem capGradedNatIso_hom_app (m : ℤ) (K : ChainComplex C ℕ) :
-    (capGradedNatIso (C := C) m).hom.app K =
+theorem extendIntLEAlternatingDifferentialNatIso_hom_app (m : ℤ) (K : ChainComplex C ℕ) :
+    (extendIntLEAlternatingDifferentialNatIso (C := C) m).hom.app K =
       (CochainComplex.alternatingDifferentialIso
         (K.extend (ComplexShape.embeddingUpIntLE m))).hom := (rfl)
 
 @[simp]
-theorem capGradedNatIso_inv_app (m : ℤ) (K : ChainComplex C ℕ) :
-    (capGradedNatIso (C := C) m).inv.app K =
+theorem extendIntLEAlternatingDifferentialNatIso_inv_app (m : ℤ) (K : ChainComplex C ℕ) :
+    (extendIntLEAlternatingDifferentialNatIso (C := C) m).inv.app K =
       (CochainComplex.alternatingDifferentialIso
         (K.extend (ComplexShape.embeddingUpIntLE m))).inv := (rfl)
 
-end ChainComplex
+end TauCeti
