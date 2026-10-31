@@ -121,7 +121,7 @@ theorem gSGraph_empty : gSGraph ∅ = ⊥ := by
   simp
 
 /-- The oriented graph is a countable union of compact edge sets, one for each word. -/
-theorem orientedGS_eq_iUnion (S : Set (List Bool)) :
+theorem orientedGS_eq_biUnion (S : Set (List Bool)) :
     orientedGS S = ⋃ s ∈ S, range (fun x : ℕ → Bool =>
       (prependWord (s ++ [false]) x, prependWord (s ++ [true]) x)) := by
   ext p
@@ -131,15 +131,15 @@ theorem orientedGS_eq_iUnion (S : Set (List Bool)) :
 theorem isClosed_orientedGS_singleton (s : List Bool) : IsClosed (orientedGS {s}) := by
   have hc := isCompact_range ((continuous_prependWord (s ++ [false])).prodMk
     (continuous_prependWord (s ++ [true])))
-  simpa [orientedGS_eq_iUnion] using hc.isClosed
+  simpa [orientedGS_eq_biUnion] using hc.isClosed
 
 /-- The oriented edge relation is Fσ, expressed as a Gδ complement. -/
 theorem isGδ_compl_orientedGS (S : Set (List Bool)) : IsGδ (orientedGS S)ᶜ := by
-  rw [orientedGS_eq_iUnion, compl_iUnion]
+  rw [orientedGS_eq_biUnion, compl_iUnion]
   refine IsGδ.iInter fun s => ?_
   rw [compl_iUnion]
   refine IsGδ.iInter fun _ => ?_
-  simpa only [orientedGS_eq_iUnion, Set.biUnion_singleton] using
+  simpa only [orientedGS_eq_biUnion, Set.biUnion_singleton] using
     (isClosed_orientedGS_singleton s).isOpen_compl.isGδ
 
 /-- The oriented edge relation is Borel. -/
@@ -224,6 +224,10 @@ theorem mem_canonicalWords_iff {s : List Bool} :
     s ∈ canonicalWords ↔ ∃ n, canonicalWord n = s :=
   Iff.rfl
 
+/-- The canonical word at every stage belongs to the canonical word set. -/
+theorem canonicalWord_mem_canonicalWords (n : ℕ) : canonicalWord n ∈ canonicalWords :=
+  mem_range_self n
+
 /-- Every finite word extends to a canonical word. -/
 theorem denseWords_canonicalWords : DenseWords canonicalWords := by
   intro r
@@ -234,6 +238,14 @@ theorem denseWords_canonicalWords : DenseWords canonicalWords := by
 theorem sparseWords_canonicalWords : SparseWords canonicalWords := by
   rintro s ⟨m, rfl⟩ t ⟨n, rfl⟩ h
   simpa using congrArg canonicalWord (by simpa using h : m = n)
+
+/-- There is exactly one canonical word of each length. -/
+theorem exists_unique_mem_canonicalWords_length (n : ℕ) :
+    ∃! s, s ∈ canonicalWords ∧ s.length = n := by
+  refine ⟨canonicalWord n, ⟨canonicalWord_mem_canonicalWords n, length_canonicalWord n⟩, ?_⟩
+  intro s hs
+  exact sparseWords_canonicalWords hs.1 (canonicalWord_mem_canonicalWords n)
+    (hs.2.trans (length_canonicalWord n).symm)
 
 /-- The unique canonical word of length `n` is `canonicalWord n`. -/
 theorem mem_canonicalWords_iff_eq_canonicalWord {s : List Bool} :
