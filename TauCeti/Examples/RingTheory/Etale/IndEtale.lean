@@ -20,7 +20,7 @@ of the scalar-extension adjunction from an importing module.
 open CategoryTheory Limits
 open scoped TensorProduct
 
-universe u v
+universe u v w
 
 namespace TauCeti.Examples
 
@@ -60,20 +60,28 @@ example : Algebra.IndEtale (ZMod 1)
     ((ZMod 1) ⊗[ZMod 1] Henselization.algebra (⊤ : Ideal (ZMod 1))) := inferInstance
 
 -- Left adjointness gives preservation for every diagram size, not only filtered ones.
-example (R S : Type u) [CommRing R] [CommRing S] [Algebra R S] :
-    PreservesColimitsOfSize.{v, v} (CommAlgCat.baseChange.{u, u} R S) := inferInstance
+example (R : Type u) (S : Type v) [CommRing R] [CommRing S] [Algebra R S] :
+    PreservesColimitsOfSize.{u, u}
+      (CommAlgCat.baseChange.{u, v, max v w} R S) := inferInstance
+
+-- The source algebras need not live in the scalar ring's universe.
+example (R : Type u) (S : Type v) [CommRing R] [CommRing S] [Algebra R S]
+    (A A' : CommAlgCat.{w} R) (f : A ⟶ A') :
+    ((CommAlgCat.baseChange R S).map f).hom =
+      Algebra.TensorProduct.map (AlgHom.id S S) f.hom := by
+  rw [CommAlgCat.baseChange_map_hom]
 
 -- Both directions of the adjunction can be computed without unfolding its construction.
-example (R S : Type u) [CommRing R] [CommRing S] [Algebra R S]
-    (A : CommAlgCat.{u} R) (B : CommAlgCat.{u} S)
+example (R : Type u) (S : Type v) [CommRing R] [CommRing S] [Algebra R S]
+    (A : CommAlgCat.{max v w} R) (B : CommAlgCat.{max v w} S)
     (f : (CommAlgCat.baseChange R S).obj A ⟶ B) (a : A) :
     ((CommAlgCat.baseChangeRestrictScalarsAdj R S).homEquiv A B f).hom a =
       f.hom (1 ⊗ₜ[R] a) := by
   rw [CommAlgCat.baseChangeRestrictScalarsAdj_homEquiv]
   exact CommAlgCat.baseChangeHomEquiv_apply R S A B f a
 
-example (R S : Type u) [CommRing R] [CommRing S] [Algebra R S]
-    (A : CommAlgCat.{u} R) (B : CommAlgCat.{u} S)
+example (R : Type u) (S : Type v) [CommRing R] [CommRing S] [Algebra R S]
+    (A : CommAlgCat.{max v w} R) (B : CommAlgCat.{max v w} S)
     (f : A ⟶ (CommAlgCat.restrictScalars (algebraMap R S)).obj B) (s : S) (a : A) :
     (((CommAlgCat.baseChangeRestrictScalarsAdj R S).homEquiv A B).symm f).hom
       (s ⊗ₜ[R] a) = s • f.hom a := by
