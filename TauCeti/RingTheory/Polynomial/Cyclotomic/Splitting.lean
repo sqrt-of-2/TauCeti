@@ -34,7 +34,8 @@ namespace Polynomial
 
 variable {R : Type*} [CommRing R] {n : ℕ} {ζ : R}
 
-/-- Evaluation at the power of a chosen primitive root labelled by a unit modulo `n`. -/
+/-- Evaluation of `R[X]/(Φ_n)` at `ζ ^ (a : ZMod n).val`, for a root `ζ` of `Φ_n`
+and a unit `a` modulo `n`. -/
 noncomputable def cyclotomicEval
     (hζ : (cyclotomic n R).IsRoot ζ) (a : (ZMod n)ˣ) :
     AdjoinRoot (cyclotomic n R) →ₐ[R] R :=
@@ -43,7 +44,8 @@ noncomputable def cyclotomicEval
       simpa only [AlgHom.id_toRingHom, eval₂_id] using
         (isRoot_cyclotomic_pow_of_coprime hζ (ZMod.val_coe_unit_coprime a)).eq_zero)
 
-/-- Evaluation sends the universal primitive root to the labelled power of `ζ`. -/
+/-- Evaluation sends the universal root of `Φ_n` to the labelled power
+`ζ ^ (a : ZMod n).val`. -/
 @[simp]
 theorem cyclotomicEval_root
     (hζ : (cyclotomic n R).IsRoot ζ) (a : (ZMod n)ˣ) :
