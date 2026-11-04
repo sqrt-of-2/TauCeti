@@ -176,18 +176,28 @@ theorem coordinateMap_comp_carrierRestriction :
   unfold carrierRestriction
   exact CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
 
-/-- Every point of the generated carrier gives a point of the specialized integral carrier
-with the same matrix, over an arbitrary commutative value algebra. -/
-theorem exists_carrierPoint (B : CommAlgCat.{v} A)
+/-- The inclusion of generated-carrier points into the specialized integral carrier,
+over an arbitrary commutative value algebra. -/
+noncomputable def carrierPointsHom (B : CommAlgCat.{v} A) :
+    HopfAlgebra.points (R := A) (H := generatedCoordinateHopfAlgebra A) B →* points B :=
+  (pointsPresentation (CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B)).mulEquiv.toMonoidHom.comp
+    ((CommHopfAlgCat.baseChangeIsoPointsMulEquiv
+      (baseChangeCoordinateIso A) B).toMonoidHom.comp
+      ((CommHopfAlgCat.Hom.mapPointsFunctor (carrierRestriction A)).app B).hom)
+
+/-- The inclusion into the specialized integral carrier preserves the ambient matrix. -/
+@[simp↓]
+theorem coe_carrierPointsHom (B : CommAlgCat.{v} A)
     (g : HopfAlgebra.points (R := A) (H := generatedCoordinateHopfAlgebra A) B) :
-    ∃ h : points B, (h : Matrix.GeneralLinearGroup (Fin 54) B) =
+    (carrierPointsHom A B g : Matrix.GeneralLinearGroup (Fin 54) B) =
       GeneralLinear.pointsMulEquiv 54
         ((CommHopfAlgCat.Hom.mapPointsFunctor (generatedCoordinateMap A)).app B g) := by
   let q := (CommHopfAlgCat.Hom.mapPointsFunctor (carrierRestriction A)).app B g
-  let h := (pointsPresentation
-    (CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B)).mulEquiv
-      (CommHopfAlgCat.baseChangeIsoPointsMulEquiv (baseChangeCoordinateIso A) B q)
-  refine ⟨h, ?_⟩
+  -- Evaluate the bundled composition before transporting between the two scalar views.
+  have happ : carrierPointsHom A B g =
+      (pointsPresentation (CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B)).mulEquiv
+        (CommHopfAlgCat.baseChangeIsoPointsMulEquiv (baseChangeCoordinateIso A) B q) := (rfl)
+  rw [happ]
   rw [GeneralLinear.IntegralPointsPresentation.coe_mulEquiv_apply]
   rw [GeneralLinear.pointsMulEquiv_quotientPointsHom_baseChangeIsoPointsMulEquiv
     54 definingIdeal (baseChangeDefiningIdeal A) (baseChangeCoordinateIso A)
@@ -196,6 +206,15 @@ theorem exists_carrierPoint (B : CommAlgCat.{v} A)
     (CommHopfAlgCat.mapPointsFunctor_eq_quotientPointsHom_of_mkQuotient_comp
       (baseChangeDefiningIdeal A) (carrierRestriction A) (generatedCoordinateMap A)
       (coordinateMap_comp_carrierRestriction A) B g).symm
+
+/-- Every point of the generated carrier gives a point of the specialized integral carrier
+with the same matrix, over an arbitrary commutative value algebra. -/
+theorem exists_carrierPoint (B : CommAlgCat.{v} A)
+    (g : HopfAlgebra.points (R := A) (H := generatedCoordinateHopfAlgebra A) B) :
+    ∃ h : points B, (h : Matrix.GeneralLinearGroup (Fin 54) B) =
+      GeneralLinear.pointsMulEquiv 54
+        ((CommHopfAlgCat.Hom.mapPointsFunctor (generatedCoordinateMap A)).app B g) :=
+  ⟨carrierPointsHom A B g, coe_carrierPointsHom A B g⟩
 
 end Generated
 
