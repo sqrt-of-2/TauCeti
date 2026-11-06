@@ -149,6 +149,12 @@ acts on the weight basis. -/
 noncomputable def coordinateWeight (j : Fin D.dim) : Fin t.rank → ℤ :=
   D.weightLatticeBasis.repr ⟨D.weight j, D.weight_mem_weightLattice j⟩
 
+/-- Reading a coordinate weight back in the lattice recovers the original weight. -/
+theorem weightLatticeBasis_equivFun_symm_coordinateWeight (j : Fin D.dim) :
+    D.weightLatticeBasis.equivFun.symm (D.coordinateWeight j) =
+      ⟨D.weight j, D.weight_mem_weightLattice j⟩ := by
+  rw [coordinateWeight, ← Module.Basis.equivFun_apply, LinearEquiv.symm_apply_apply]
+
 /-- **The coordinate weights are the coordinates of the weights**: recombining the chosen basis of
 the weight lattice with them recovers the weights. -/
 theorem sum_coordinateWeight_smul (j : Fin D.dim) :

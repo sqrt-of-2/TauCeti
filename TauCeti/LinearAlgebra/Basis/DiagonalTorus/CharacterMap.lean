@@ -55,6 +55,7 @@ endomorphisms of groups of Lie type use:
 
 * `TauCeti.torusPointMap`: the homomorphism of split-torus points dual to a homomorphism of
   character lattices.
+* `TauCeti.torusPointEquiv`: the isomorphism of split-torus points dual to a lattice isomorphism.
 * `TauCeti.IsCharacterMap`: an endomorphism acts on a parametrized torus through a given
   endomorphism of the character lattice.
 
@@ -129,6 +130,35 @@ theorem torusPointMap_comp [Fintype ν] [DecidableEq κ] (ψ : (κ → ℤ) →�
     torusPointMap (R := R) (ψ ∘ₗ φ) = (torusPointMap φ).comp (torusPointMap ψ) := by
   refine MonoidHom.ext fun s => funext fun i => ?_
   simp
+
+/-- The isomorphism of split-torus points dual to an isomorphism of character lattices. -/
+def torusPointEquiv [Fintype ι] [DecidableEq κ] (φ : (ι → ℤ) ≃ₗ[ℤ] (κ → ℤ)) :
+    (κ → Rˣ) ≃* (ι → Rˣ) :=
+  { torusPointMap φ.toLinearMap with
+    invFun := torusPointMap φ.symm.toLinearMap
+    left_inv := fun s => funext fun j => by simp [torusPointMap_apply]
+    right_inv := fun s => funext fun j => by simp [torusPointMap_apply] }
+
+/-- The underlying homomorphism of the dual isomorphism is the dual point map. -/
+@[simp]
+theorem coe_torusPointEquiv [Fintype ι] [DecidableEq κ]
+    (φ : (ι → ℤ) ≃ₗ[ℤ] (κ → ℤ)) :
+    (torusPointEquiv (R := R) φ : (κ → Rˣ) →* (ι → Rˣ)) = torusPointMap φ.toLinearMap :=
+  (rfl)
+
+/-- The dual isomorphism acts by the dual point map. -/
+@[simp]
+theorem torusPointEquiv_apply [Fintype ι] [DecidableEq κ]
+    (φ : (ι → ℤ) ≃ₗ[ℤ] (κ → ℤ)) (s : κ → Rˣ) :
+    torusPointEquiv φ s = torusPointMap (R := R) φ.toLinearMap s :=
+  (rfl)
+
+/-- Inverting the lattice isomorphism inverts its dual torus isomorphism. -/
+@[simp]
+theorem symm_torusPointEquiv [Fintype ι] [DecidableEq κ]
+    (φ : (ι → ℤ) ≃ₗ[ℤ] (κ → ℤ)) :
+    (torusPointEquiv (R := R) φ).symm = torusPointEquiv φ.symm :=
+  (rfl)
 
 /-- `torusPointMap` turns sums of lattice maps into products of point maps. -/
 theorem torusPointMap_add (φ ψ : (ι → ℤ) →ₗ[ℤ] (κ → ℤ)) :
@@ -270,14 +300,19 @@ section Group
 
 variable [Group G] {T : (κ → Rˣ) →* G} {F : G →* G} {φ : Module.End ℤ (κ → ℤ)}
 
+/-- A character map whose dual point map is surjective makes the endomorphism map the
+parametrized torus onto itself, without a divisibility assumption on the units. -/
+theorem IsCharacterMap.map_range_eq_of_surjective (h : IsCharacterMap T F φ)
+    (hφ : Function.Surjective (torusPointMap (R := R) φ)) : T.range.map F = T.range := by
+  rw [MonoidHom.map_range, isCharacterMap_iff_comp.mp h, ← MonoidHom.map_range,
+    MonoidHom.range_eq_top.mpr hφ, ← MonoidHom.range_eq_map]
+
 /-- **An injective character map makes the endomorphism map the torus onto itself**, when the
 units of `R` are divisible, for instance over an algebraically closed field: the image under `F` of
 the image of `T` is the image of `T`. -/
 theorem IsCharacterMap.map_range_eq [RootableBy Rˣ ℕ] (h : IsCharacterMap T F φ)
-    (hφ : Function.Injective φ) : T.range.map F = T.range := by
-  rw [MonoidHom.map_range, isCharacterMap_iff_comp.mp h, ← MonoidHom.map_range,
-    MonoidHom.range_eq_top.mpr (torusPointMap_surjective_of_injective hφ),
-    ← MonoidHom.range_eq_map]
+    (hφ : Function.Injective φ) : T.range.map F = T.range :=
+  h.map_range_eq_of_surjective (torusPointMap_surjective_of_injective hφ)
 
 /-- **Lang's equation on the torus.** If the units of `R` are divisible and `1 - φ` is injective,
 then every torus point is `T u * (F (T u))⁻¹` for some torus point `T u`: the homomorphism

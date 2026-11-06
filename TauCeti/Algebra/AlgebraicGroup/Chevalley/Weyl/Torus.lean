@@ -71,10 +71,17 @@ theorem coe_weightLatticeSimpleReflection (i : Fin t.rank) (μ : D.weightLattice
 
 /-- Restricting the root-datum reflection preserves its involution law. -/
 @[simp]
-theorem weightLatticeSimpleReflection_apply_twice (i : Fin t.rank) (μ : D.weightLattice) :
+theorem weightLatticeSimpleReflection_weightLatticeSimpleReflection (i : Fin t.rank)
+    (μ : D.weightLattice) :
     D.weightLatticeSimpleReflection i (D.weightLatticeSimpleReflection i μ) = μ := by
   -- The restriction has exactly the ambient reflection as its underlying function.
   exact Subtype.ext ((t.simplyConnectedRootDatum ht).reflection_same _ μ)
+
+/-- The restricted simple reflection is its own inverse. -/
+@[simp]
+theorem symm_weightLatticeSimpleReflection (i : Fin t.rank) :
+    (D.weightLatticeSimpleReflection i).symm = D.weightLatticeSimpleReflection i :=
+  (rfl)
 
 /-- The simple reflection in coordinates of the datum's own character lattice. -/
 noncomputable def coordinateSimpleReflection (i : Fin t.rank) :
@@ -91,26 +98,34 @@ theorem sum_coordinateSimpleReflection_smul (i : Fin t.rank) (μ : Fin t.rank �
   simp only [coordinateSimpleReflection, LinearEquiv.trans_apply,
     LinearEquiv.symm_apply_apply]
 
-/-- Recombining reflected coordinates gives the reflected weight. -/
+/-- The coordinate simple reflection sends the coordinate weight of a basis vector to the
+coordinates of its reflected weight. -/
 @[simp]
 theorem coordinateSimpleReflection_coordinateWeight (i : Fin t.rank) (j : Fin D.dim) :
     D.coordinateSimpleReflection i (D.coordinateWeight j) =
       D.weightLatticeBasis.equivFun
         (D.weightLatticeSimpleReflection i ⟨D.weight j, D.weight_mem_weightLattice j⟩) := by
-  have h : D.weightLatticeBasis.equivFun.symm (D.coordinateWeight j) =
-      ⟨D.weight j, D.weight_mem_weightLattice j⟩ := by
-    apply Subtype.ext
-    simp only [Module.Basis.equivFun_symm_apply, Submodule.coe_sum, Submodule.coe_smul]
-    exact D.sum_coordinateWeight_smul j
-  simp only [coordinateSimpleReflection, LinearEquiv.trans_apply, h]
+  simp only [coordinateSimpleReflection, LinearEquiv.trans_apply,
+    D.weightLatticeBasis_equivFun_symm_coordinateWeight]
 
 /-- The coordinate simple reflection is an involution. -/
 @[simp]
-theorem coordinateSimpleReflection_apply_twice (i : Fin t.rank) (μ : Fin t.rank → ℤ) :
+theorem coordinateSimpleReflection_coordinateSimpleReflection (i : Fin t.rank)
+    (μ : Fin t.rank → ℤ) :
     D.coordinateSimpleReflection i (D.coordinateSimpleReflection i μ) = μ := by
   simp only [coordinateSimpleReflection, LinearEquiv.trans_apply,
     LinearEquiv.symm_apply_apply]
-  rw [D.weightLatticeSimpleReflection_apply_twice, LinearEquiv.apply_symm_apply]
+  rw [D.weightLatticeSimpleReflection_weightLatticeSimpleReflection,
+    LinearEquiv.apply_symm_apply]
+
+/-- The coordinate simple reflection is its own inverse. -/
+@[simp]
+theorem symm_coordinateSimpleReflection (i : Fin t.rank) :
+    (D.coordinateSimpleReflection i).symm = D.coordinateSimpleReflection i := by
+  apply LinearEquiv.ext
+  intro μ
+  apply (D.coordinateSimpleReflection i).injective
+  simp
 
 variable {A : Type*} [CommRing A]
 
@@ -118,37 +133,40 @@ variable {A : Type*} [CommRing A]
 character lattice in its chosen basis. -/
 noncomputable def simpleReflectionTorus (i : Fin t.rank) :
     (Fin t.rank → Aˣ) ≃* (Fin t.rank → Aˣ) :=
-  { torusPointMap (D.coordinateSimpleReflection i).toLinearMap with
-    invFun := torusPointMap (D.coordinateSimpleReflection i).toLinearMap
-    left_inv := fun s => funext fun j => by
-      simp [torusPointMap_apply]
-    right_inv := fun s => funext fun j => by
-      simp [torusPointMap_apply] }
+  torusPointEquiv (D.coordinateSimpleReflection i)
 
 /-- Each reflected torus coordinate evaluates the reflected basic character. -/
 @[simp]
 theorem simpleReflectionTorus_apply (i : Fin t.rank) (s : Fin t.rank → Aˣ)
     (j : Fin t.rank) :
     D.simpleReflectionTorus i s j =
-      torusCharacter s (D.coordinateSimpleReflection i (Pi.single j 1)) :=
-  torusPointMap_apply _ _ _
+      torusCharacter s (D.coordinateSimpleReflection i (Pi.single j 1)) := by
+  simp only [simpleReflectionTorus, torusPointEquiv_apply, torusPointMap_apply,
+    LinearEquiv.coe_coe]
 
 /-- Characters of the datum's actual torus pull back by the simple reflection. -/
 @[simp]
 theorem torusCharacter_simpleReflectionTorus (i : Fin t.rank) (s : Fin t.rank → Aˣ)
     (μ : Fin t.rank → ℤ) :
     torusCharacter (D.simpleReflectionTorus i s) μ =
-      torusCharacter s (D.coordinateSimpleReflection i μ) :=
-  torusCharacter_torusPointMap _ _ _
+      torusCharacter s (D.coordinateSimpleReflection i μ) := by
+  simp only [simpleReflectionTorus, torusPointEquiv_apply, torusCharacter_torusPointMap,
+    LinearEquiv.coe_coe]
 
 /-- Reflection of actual-torus parameters is involutive over every value ring. -/
 @[simp]
-theorem simpleReflectionTorus_apply_twice (i : Fin t.rank) (s : Fin t.rank → Aˣ) :
+theorem simpleReflectionTorus_simpleReflectionTorus (i : Fin t.rank) (s : Fin t.rank → Aˣ) :
     D.simpleReflectionTorus i (D.simpleReflectionTorus i s) = s := by
   ext j
   simp [simpleReflectionTorus, torusPointMap_apply]
 
-private theorem coordinateTorus_tmul (μ : D.weightLattice) (m : D.lattice)
+/-- Reflection of actual-torus parameters is its own inverse. -/
+@[simp]
+theorem symm_simpleReflectionTorus (i : Fin t.rank) :
+    (D.simpleReflectionTorus (A := A) i).symm = D.simpleReflectionTorus i := by
+  simp only [simpleReflectionTorus, symm_torusPointEquiv, D.symm_coordinateSimpleReflection]
+
+private theorem kostantTorusPoints_tmul_of_mem_weightLattice (μ : D.weightLattice) (m : D.lattice)
     (hm : UniversalEnvelopingAlgebra.IsCartanWeightVector (t.lieBasis ht).h D.representation
       (μ : Fin t.rank → ℤ) (m : D.carrier)) (s : Fin t.rank → Aˣ) (a : A) :
     (UniversalEnvelopingAlgebra.kostantTorusPoints D.lattice D.basis D.coordinateWeight A s).val
@@ -162,10 +180,8 @@ private theorem coordinateTorus_tmul (μ : D.weightLattice) (m : D.lattice)
     intro h
     apply hj
     apply D.weightLatticeBasis.equivFun.symm.injective
-    apply Subtype.ext
-    simp only [Module.Basis.equivFun_symm_apply, LinearEquiv.symm_apply_apply,
-      Submodule.coe_sum, Submodule.coe_smul]
-    exact (D.sum_coordinateWeight_smul j).trans h
+    rw [D.weightLatticeBasis_equivFun_symm_coordinateWeight, LinearEquiv.symm_apply_apply]
+    exact Subtype.ext h
   rw [Module.Basis.baseChange_repr_tmul,
     UniversalEnvelopingAlgebra.repr_eq_zero_of_isCartanWeightVector
       (t.lieBasis ht).h D.representation D.lattice D.basis D.weight
@@ -175,7 +191,7 @@ private theorem coordinateTorus_tmul (μ : D.weightLattice) (m : D.lattice)
 /-- The integral simple Weyl representative conjugates the actual coordinate torus by
 its dual simple reflection. No extension of torus parameters to the full weight lattice
 is required. The equality is in the general linear group of the scalar-extended lattice. -/
-theorem kostantWeylGL_conj_coordinateTorus (i : Fin t.rank) (s : Fin t.rank → Aˣ) :
+theorem kostantWeylGL_conj_kostantTorusPoints (i : Fin t.rank) (s : Fin t.rank → Aˣ) :
     let n := UniversalEnvelopingAlgebra.kostantWeylGL (t.lieBasis ht).rootGenerator
       (t.lieBasis ht).h D.representation D.lattice D.representation_mem_lattice
       (D.isNilpotent_representation_rootGenerator (.inl i))
@@ -211,41 +227,43 @@ theorem kostantWeylGL_conj_coordinateTorus (i : Fin t.rank) (s : Fin t.rank → 
       (D.isCartanWeightVector_basis j)
   simp only [Module.Basis.baseChange_apply, mul_apply_eq_comp, LinearEquiv.coe_coe,
     UniversalEnvelopingAlgebra.kostantWeylPoints_symm_apply_tmul]
-  rw [D.coordinateTorus_tmul μ m hm,
+  rw [D.kostantTorusPoints_tmul_of_mem_weightLattice μ m hm,
     UniversalEnvelopingAlgebra.kostantWeylPoints_apply_tmul,
     LinearEquiv.apply_symm_apply,
     UniversalEnvelopingAlgebra.kostantTorusPoints_tmul_basis,
     D.torusCharacter_simpleReflectionTorus, D.coordinateSimpleReflection_coordinateWeight]
 
-/-- In matrix coordinates of the datum, conjugation by the simple Weyl representative
-reflects the actual torus parameters. -/
-theorem basisMatrix_kostantWeylGL_conj_coordinateTorus (i : Fin t.rank)
-    (s : Fin t.rank → Aˣ) :
+/-- In matrix coordinates of the datum, the coordinate simple reflection is the character
+map of conjugation by the simple Weyl representative on the actual torus. -/
+theorem isCharacterMap_conj_kostantWeylGL (i : Fin t.rank) :
     let n := Units.map (LinearMap.toMatrixAlgEquiv (D.basis.baseChange A)).toMulEquiv
       (UniversalEnvelopingAlgebra.kostantWeylGL (t.lieBasis ht).rootGenerator
         (t.lieBasis ht).h D.representation D.lattice D.representation_mem_lattice
         (D.isNilpotent_representation_rootGenerator (.inl i))
         (D.isNilpotent_representation_rootGenerator (.inr i)) A)
-    n * UniversalEnvelopingAlgebra.kostantTorusMatrix D.lattice D.basis D.coordinateWeight s *
-        n⁻¹ =
-      UniversalEnvelopingAlgebra.kostantTorusMatrix D.lattice D.basis D.coordinateWeight
-        (D.simpleReflectionTorus i s) := by
+    IsCharacterMap
+      (UniversalEnvelopingAlgebra.kostantTorusMatrix D.lattice D.basis D.coordinateWeight (A := A))
+      (MulAut.conj n).toMonoidHom (D.coordinateSimpleReflection i).toLinearMap := by
+  dsimp only
+  rw [isCharacterMap_iff]
+  intro s
   let f : (Module.End A (A ⊗[ℤ] D.lattice))ˣ →*
       Matrix.GeneralLinearGroup (Fin D.dim) A :=
-    Units.map (LinearMap.toMatrixAlgEquiv (D.basis.baseChange A)).toMonoidHom
+    Units.map (LinearMap.toMatrixAlgEquiv (D.basis.baseChange A)).toMulEquiv
   have hf (u : Fin t.rank → Aˣ) :
       f (UniversalEnvelopingAlgebra.kostantTorusPoints
         D.lattice D.basis D.coordinateWeight A u) =
       UniversalEnvelopingAlgebra.kostantTorusMatrix
         D.lattice D.basis D.coordinateWeight u := by
     exact UniversalEnvelopingAlgebra.basisMatrix_kostantTorusPoints _ _ _ _
-  have he := congrArg f (D.kostantWeylGL_conj_coordinateTorus i s)
+  have he := congrArg f (D.kostantWeylGL_conj_kostantTorusPoints i s)
   rw [map_mul, map_mul, map_inv, hf, hf] at he
-  exact he
+  simpa only [simpleReflectionTorus, torusPointEquiv_apply, MulEquiv.toMonoidHom_eq_coe,
+    MonoidHom.coe_ofClass, MulAut.conj_apply] using he
 
 /-- A simple Weyl representative normalizes the full actual torus of a Chevalley datum,
 not merely the image of its full-weight parametrization. -/
-theorem map_coordinateTorus_range_conj_kostantWeylGL (i : Fin t.rank) :
+theorem map_kostantTorusMatrix_range_conj_kostantWeylGL (i : Fin t.rank) :
     let n := Units.map (LinearMap.toMatrixAlgEquiv (D.basis.baseChange A)).toMulEquiv
       (UniversalEnvelopingAlgebra.kostantWeylGL (t.lieBasis ht).rootGenerator
         (t.lieBasis ht).h D.representation D.lattice D.representation_mem_lattice
@@ -256,26 +274,9 @@ theorem map_coordinateTorus_range_conj_kostantWeylGL (i : Fin t.rank) :
           D.lattice D.basis D.coordinateWeight (A := A)).range =
       (UniversalEnvelopingAlgebra.kostantTorusMatrix
         D.lattice D.basis D.coordinateWeight (A := A)).range := by
-  let n : Matrix.GeneralLinearGroup (Fin D.dim) A :=
-    Units.map (LinearMap.toMatrixAlgEquiv (D.basis.baseChange A)).toMulEquiv
-      (UniversalEnvelopingAlgebra.kostantWeylGL (t.lieBasis ht).rootGenerator
-        (t.lieBasis ht).h D.representation D.lattice D.representation_mem_lattice
-        (D.isNilpotent_representation_rootGenerator (.inl i))
-        (D.isNilpotent_representation_rootGenerator (.inr i)) A)
-  dsimp only
-  rw [← MonoidHom.range_comp]
-  have hc : (MulAut.conj n).toMonoidHom.comp
-      (UniversalEnvelopingAlgebra.kostantTorusMatrix
-        D.lattice D.basis D.coordinateWeight (A := A)) =
-      (UniversalEnvelopingAlgebra.kostantTorusMatrix
-        D.lattice D.basis D.coordinateWeight).comp
-          (D.simpleReflectionTorus i).toMonoidHom := by
-    ext s : 1
-    exact D.basisMatrix_kostantWeylGL_conj_coordinateTorus i s
-  rw [hc, MonoidHom.range_comp,
-    MonoidHom.range_eq_top.mpr
-      (show Function.Surjective (D.simpleReflectionTorus (A := A) i).toMonoidHom from
-        (D.simpleReflectionTorus i).surjective), Subgroup.map_top]
+  apply (D.isCharacterMap_conj_kostantWeylGL i).map_range_eq_of_surjective
+  simpa only [Function.Surjective, torusPointEquiv_apply] using
+    (torusPointEquiv (R := A) (D.coordinateSimpleReflection i)).surjective
 
 end TauCeti.DynkinType.ChevalleyDatum
 
