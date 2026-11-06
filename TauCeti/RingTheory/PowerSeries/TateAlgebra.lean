@@ -242,6 +242,24 @@ noncomputable instance instNormedCommRingIsRestrictedSubring :
   inferInstanceAs (NormedCommRing
     (MvPowerSeries.IsRestricted.subring (R := R) (fun _ : Unit ↦ c)))
 
+/-- The coefficient embedding into univariate restricted series preserves norms. -/
+@[simp]
+theorem norm_algebraMap (a : R) :
+    ‖algebraMap R (PowerSeries.IsRestricted.subring (R := R) c) a‖ = ‖a‖ := by
+  have ha : algebraMap R (PowerSeries.IsRestricted.subring (R := R) c) a =
+      ⟨PowerSeries.C a, PowerSeries.isRestricted_C c a⟩ := by
+    apply Subtype.ext
+    ext n
+    simp
+  rw [ha, norm_C]
+
+/-- The coefficient-ring action on univariate restricted series is bounded for the Gauss norm. -/
+noncomputable instance instIsBoundedSMulIsRestrictedSubring :
+    IsBoundedSMul R (PowerSeries.IsRestricted.subring (R := R) c) :=
+  .of_norm_smul_le fun a f ↦ by
+    rw [Algebra.smul_def]
+    exact (norm_mul_le _ _).trans_eq (by rw [norm_algebraMap])
+
 variable {c} in
 /-- In the Gauss norm at a radius `c > 0`, the linear polynomial `a + d X` has weighted norm at
 most `M` once both `‖a‖` and `‖d‖ c` do. -/

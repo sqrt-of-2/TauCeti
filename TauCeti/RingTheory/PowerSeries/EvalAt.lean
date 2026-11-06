@@ -305,6 +305,24 @@ section Normed
 variable {R A : Type*} [NormedCommRing R] [NormedRing A] [Algebra R A] [IsBoundedSMul R A]
   {f : R⟦X⟧}
 
+omit [IsBoundedSMul R A] in
+/-- Evaluation along a contractive coefficient embedding is bounded by the Gauss norm in an
+ultrametric target. Unlike a bound on scalar multiplication alone, contractivity controls the
+constant term without assuming that the target has norm-one identity. -/
+theorem norm_evalAt_le_gaussNorm_of_norm_algebraMap_le [IsUltrametricDist A] {r : ℝ}
+    (hf : f.HasGaussNorm norm r) (hφ : ∀ a, ‖algebraMap R A a‖ ≤ ‖a‖)
+    {b : A} (hb : ‖b‖ ≤ r) : ‖f.evalAt b‖ ≤ gaussNorm norm r f := by
+  apply IsUltrametricDist.norm_tsum_le_of_forall_le_of_nonneg
+    (gaussNorm_nonneg _ _ _ norm_nonneg)
+  intro n
+  rw [Algebra.smul_def]
+  cases n with
+  | zero => simpa using (hφ (coeff 0 f)).trans (by simpa using le_gaussNorm norm r f hf 0)
+  | succ n =>
+    exact (norm_mul_le _ _).trans <| (mul_le_mul (hφ _) ((norm_pow_le' b n.succ_pos).trans
+      (pow_le_pow_left₀ (norm_nonneg b) hb _)) (norm_nonneg _) (norm_nonneg _)).trans
+      (le_gaussNorm norm r f hf _)
+
 /-- In an ultrametric normed algebra with `‖1‖ = 1`, the value of a series at a point `b` with
 `‖b‖ ≤ r` is bounded by the Gauss norm of the series at the radius `r`, whenever the latter is
 defined. This needs no convergence: the junk value `0` satisfies the bound too. -/
