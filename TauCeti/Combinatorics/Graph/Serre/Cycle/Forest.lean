@@ -5,9 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Combinatorics.Graph.Serre.Basic
+public import TauCeti.Combinatorics.Graph.Serre.Cycle.Basic
 public import TauCeti.Combinatorics.SimpleGraph.Connectivity.Connected
 public import Mathlib.Combinatorics.SimpleGraph.Acyclic
+import Mathlib.Tactic.Abel
 
 /-!
 # Spanning forests of chosen Serre darts
@@ -129,5 +130,25 @@ theorem IsSpanningForest.card_add_card_connectedComponent [Finite Γ.V]
     ((Γ.supportGraph F).connectedComponentEquivOfReachableEq hF.reachable_eq)
   have h := hF.isAcyclic.ncard_edgeSet_add_card_connectedComponent
   simpa only [Nat.card_coe_set_eq, ← hcard, hcomp] using h
+
+/-- Vertices joined in the support graph are the ends of a finite signed chain of the chosen
+actual darts. Its boundary is the terminal vertex minus the initial vertex. -/
+theorem exists_incidenceBoundary_eq_sub_of_reachable {R : Type*} [Ring R]
+    {a b : Γ.V} (h : (Γ.supportGraph F).Reachable a b) :
+    ∃ c : F →₀ R, Γ.incidenceBoundary F R c =
+      Finsupp.single b 1 - Finsupp.single a 1 := by
+  obtain ⟨p⟩ := h
+  induction p with
+  | nil => exact ⟨0, by simp⟩
+  | @cons a b d hab p ih =>
+    obtain ⟨c, hc⟩ := ih
+    obtain ⟨_, (⟨e, he, ha, hb⟩ | ⟨e, he, hb, ha⟩)⟩ :=
+      (Γ.supportGraph_adj F a b).mp hab
+    · refine ⟨Finsupp.single ⟨e, he⟩ 1 + c, ?_⟩
+      simp only [map_add, incidenceBoundary_single, one_smul, ha, hb, hc]
+      abel
+    · refine ⟨-Finsupp.single ⟨e, he⟩ 1 + c, ?_⟩
+      simp only [map_add, map_neg, incidenceBoundary_single, one_smul, ha, hb, hc]
+      abel
 
 end TauCeti.SerreGraph
