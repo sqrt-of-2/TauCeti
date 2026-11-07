@@ -64,6 +64,14 @@ theorem expNeg_le_one (x : ℝ≥0∞) : expNeg x ≤ 1 := by
     EReal.neg_add (.inl (EReal.coe_ennreal_ne_bot _)) (.inr (EReal.coe_ennreal_ne_bot _)),
     sub_eq_add_neg, EReal.exp_add, toNNReal_mul]
 
+/-- Finite sums become products, including infinite summands. -/
+@[simp] theorem expNeg_sum {ι : Type*} (s : Finset ι) (f : ι → ℝ≥0∞) :
+    expNeg (∑ i ∈ s, f i) = ∏ i ∈ s, expNeg (f i) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | @insert i s hi ih => simp [hi, ih]
+
 /-- Continuity includes convergence to zero when the argument tends to infinity. -/
 @[fun_prop] theorem continuous_expNeg : Continuous expNeg := by
   apply continuous_iff_continuousAt.mpr
