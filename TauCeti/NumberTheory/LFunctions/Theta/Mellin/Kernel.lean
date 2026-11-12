@@ -131,7 +131,7 @@ open scoped Classical in
 /-- On a bounded surface set, the theta series is uniformly bounded for radial parameters
 above any fixed positive lower radius. -/
 theorem exists_norm_latticeTheta_surfaceScale_le {D : Set (realSpace K)}
-    (hD : Bornology.IsBounded D) (L : Submodule ℤ (mixedSpace K)) [DiscreteTopology L]
+    (hD : Bornology.IsBounded D) (L : Submodule ℤ (mixedSpace K))
     {t₀ : ℝ} (ht₀ : 0 < t₀) :
     ∃ B : ℝ, ∀ t ≥ t₀, ∀ x : normOneSurface K, (x : realSpace K) ∈ D →
       ‖latticeTheta L (surfaceScale (x : realSpace K) t)‖ ≤ B := by
@@ -150,7 +150,7 @@ open scoped Classical in
 integrable over that set. Boundedness on the norm-one surface bounds every coordinate away from
 zero, so a single Gaussian theta value dominates it. -/
 theorem integrableOn_latticeTheta_surfaceScale {D : Set (realSpace K)} (hDm : MeasurableSet D)
-    (hD : Bornology.IsBounded D) (L : Submodule ℤ (mixedSpace K)) [DiscreteTopology L]
+    (hD : Bornology.IsBounded D) (L : Submodule ℤ (mixedSpace K))
     {t : ℝ} (ht : 0 < t) :
     IntegrableOn (fun x : normOneSurface K ↦ latticeTheta L (surfaceScale (x : realSpace K) t))
       (Subtype.val ⁻¹' D) (surfaceHaar K) := by
@@ -233,10 +233,10 @@ section
 
 open Filter Set
 
-/-- At a positive norm `t`, the theta series of a discrete lattice is continuous along the
-norm-one surface. -/
+/-- At a positive norm `t`, the theta series of a lattice is continuous along the norm-one
+surface. -/
 theorem continuous_latticeTheta_surfaceScale (L : Submodule ℤ (mixedSpace K))
-    [DiscreteTopology L] {t : ℝ} (ht : 0 < t) :
+    {t : ℝ} (ht : 0 < t) :
     Continuous fun x : normOneSurface K ↦ latticeTheta L (surfaceScale (x : realSpace K) t) :=
   continuous_iff_continuousAt.mpr fun x ↦ ContinuousAt.comp (g := latticeTheta L)
     (continuousAt_latticeTheta L (surfaceScale_pos (mem_normOneSurface.mp x.property).1 ht))
