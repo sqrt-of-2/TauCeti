@@ -6,24 +6,27 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Geometry.Manifold.Complex.StructureSheaf.Cotangent
+public import TauCeti.Geometry.Manifold.Complex.StructureSheaf.Dimension
+public import TauCeti.Geometry.Manifold.Complex.StructureSheaf.Noetherian
 public import TauCeti.Geometry.Manifold.Complex.StructureSheaf.Regular
-import TauCeti.Geometry.Manifold.Complex.StructureSheaf.StalkPullback
 public import TauCeti.RingTheory.RegularLocalRing.CohenMacaulay
 import TauCeti.RingTheory.Regular.RegularSequence
 
 /-!
-# Regular holomorphic local rings and coordinate parameters
+# Coordinate parameters of regular holomorphic local rings
 
 The local ring of holomorphic germs on a finite-dimensional complex manifold without boundary
-is regular, of Krull dimension equal to the complex dimension of the model. Its maximal ideal
-needs exactly that many generators. These statements combine the cotangent-space calculation,
-Noetherianity and the dimension lower bound for holomorphic stalks.
+is regular, of Krull dimension equal to the complex dimension of the model
+(`TauCeti.holomorphicStructureSheaf.stalkIsRegularLocalRing`,
+`TauCeti.holomorphicStructureSheaf.ringKrullDim_stalk`). Its maximal ideal needs exactly that many
+generators (`TauCeti.holomorphicStructureSheaf.spanFinrank_maximalIdeal_stalk`), by the
+cotangent-space calculation.
 
 Centered coordinates in any holomorphic chart form a regular sequence, not merely a generating
 family of the maximal ideal. Thus successive coordinate equations are non-zero-divisors on the
 successive quotients. This is the local algebra underlying smooth holomorphic zero sets.
-The dimension and regularity statements also apply to the native complex-smooth sheaf stalks
-through their canonical comparison with holomorphic germs.
+The generator count also applies to the native complex-smooth sheaf stalks through their
+canonical comparison with holomorphic germs.
 
 ## References
 

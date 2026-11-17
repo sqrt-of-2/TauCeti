@@ -22,9 +22,9 @@ It is in particular bijective (`stalkPullback_bijective`), as is pullback along 
 linear equivalence (`ContinuousLinearEquiv.holomorphicStalkPullback_bijective`). For a boundaryless
 model, `OpenPartialHomeomorph.holomorphicStalkEquivModelSpace` identifies a manifold stalk with a
 stalk on a continuously linearly equivalent model space using any analytic chart;
-`stalkEquivModelSpace` specializes this ring equivalence to the preferred chart.
-In finite dimensions, `exists_ringEquiv_stalk_modelSpace` packages this comparison with a
-model space in `Type` of the same dimension.
+`stalkEquivModelSpace` specializes this ring equivalence to the preferred chart, which identifies
+a stalk of a finite-dimensional manifold with a stalk of a model space in `Type`
+(`exists_ringEquiv_stalk_modelSpace`).
 On the complex line, `eventually_contMDiffAt_of_analyticAt` supplies the local hypothesis
 from `AnalyticAt`.
 -/
@@ -455,8 +455,7 @@ theorem exists_ringEquiv_stalk_modelSpace [FiniteDimensional ℂ E] [IsManifold 
   -- `Type`: compose the chart at `x` with a linear isomorphism onto a space in `Type`.
   let e : E ≃L[ℂ] (Fin (Module.finrank ℂ E) → ℂ) := ContinuousLinearEquiv.ofFinrankEq (by simp)
   exact ⟨Fin (Module.finrank ℂ E) → ℂ, inferInstance, inferInstance, inferInstance,
-    (e ∘ extChartAt I x) x, by simp,
-    ⟨(stalkEquivModelSpace x e).symm⟩⟩
+    e (extChartAt I x x), by simp, ⟨(stalkEquivModelSpace x e).symm⟩⟩
 
 end TauCeti.holomorphicStructureSheaf
 
