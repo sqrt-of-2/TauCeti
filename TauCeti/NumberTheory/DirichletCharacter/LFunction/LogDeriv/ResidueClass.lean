@@ -8,10 +8,10 @@ module
 public import Mathlib.Analysis.Calculus.LogDeriv
 public import Mathlib.NumberTheory.LSeries.PrimesInAP
 public import TauCeti.Data.Nat.GCD
+public import TauCeti.NumberTheory.DirichletCharacter.LFunction.Basic
 import Mathlib.NumberTheory.LSeries.Linearity
 import TauCeti.Analysis.Calculus.LogDeriv
 import TauCeti.NumberTheory.DirichletCharacter.Basic
-import TauCeti.NumberTheory.DirichletCharacter.LFunction.Basic
 import TauCeti.NumberTheory.DirichletCharacter.LFunction.LogDeriv.Basic
 
 /-!
@@ -80,21 +80,39 @@ theorem LSeriesHasSum_residueClass_mul_one_sub {q d : ℕ} [NeZero q] [NeZero d]
   field_simp
   ring
 
-/-- The auxiliary expression used to subtract the pole of the von Mangoldt series in an
-invertible residue class is analytic at `1`. -/
-theorem analyticAt_LFunctionResidueClassAux_one {q : ℕ} [NeZero q] (a : ZMod q) :
-    AnalyticAt ℂ (LFunctionResidueClassAux a) 1 := by
+/-- In the residue class `1`, the pole-subtracted von Mangoldt series is the negative mean of
+logarithmic derivatives of the entire L-functions. No character weights remain in this class. -/
+theorem LFunctionResidueClassAux_one_eq_neg_mean_logDeriv {q : ℕ} [NeZero q] (s : ℂ) :
+    LFunctionResidueClassAux (1 : ZMod q) s =
+      -(q.totient : ℂ)⁻¹ * ∑ ψ : DirichletCharacter ℂ q, logDeriv (entireLFunction ψ) s := by
   classical
-  have h₀ : AnalyticAt ℂ (fun s ↦ -logDeriv (LFunctionTrivChar₁ q) s) 1 :=
-    (((differentiable_LFunctionTrivChar₁ q).analyticAt 1).logDeriv
-      (LFunctionTrivChar₁_apply_one_ne_zero q)).fun_neg
+  rw [Fintype.sum_eq_add_sum_compl (1 : DirichletCharacter ℂ q)]
+  simp only [entireLFunction_one, LFunctionResidueClassAux, logDeriv_apply, neg_div]
+  rw [neg_mul, ← mul_neg, neg_add, sub_eq_add_neg, ← Finset.sum_neg_distrib]
+  congr 2
+  rw [← Finset.sum_neg_distrib]
+  exact Finset.sum_congr rfl fun ψ hψ ↦ by
+    simp [entireLFunction_of_ne_one (by simpa using hψ : ψ ≠ 1)]
+
+/-- The auxiliary expression for the pole-subtracted von Mangoldt series in a residue
+class is analytic at every point of the closed half-plane `1 ≤ Re s`. -/
+theorem analyticAt_LFunctionResidueClassAux_of_one_le_re {q : ℕ} [NeZero q] (a : ZMod q)
+    {z : ℂ} (hz : 1 ≤ z.re) : AnalyticAt ℂ (LFunctionResidueClassAux a) z := by
+  classical
+  have hne : LFunctionTrivChar₁ q z ≠ 0 := by
+    by_cases h : z = 1
+    · exact h ▸ LFunctionTrivChar₁_apply_one_ne_zero q
+    · rw [LFunctionTrivChar₁_apply_of_ne_one _ h]
+      exact mul_ne_zero (sub_ne_zero.mpr h) (LFunction_ne_zero_of_one_le_re 1 (.inr h) hz)
+  have h₀ : AnalyticAt ℂ (fun s ↦ -logDeriv (LFunctionTrivChar₁ q) s) z :=
+    (((differentiable_LFunctionTrivChar₁ q).analyticAt z).logDeriv hne).fun_neg
   have h₁ : AnalyticAt ℂ (fun s ↦ ∑ ψ ∈ ({1}ᶜ : Finset (DirichletCharacter ℂ q)),
-      ψ a⁻¹ * logDeriv ψ.LFunction s) 1 := by
+      ψ a⁻¹ * logDeriv ψ.LFunction s) z := by
     refine Finset.analyticAt_fun_sum _ fun ψ hψ ↦ analyticAt_const.fun_mul ?_
     have hψ' : ψ ≠ 1 := by simpa using hψ
     exact (ψ.analyticAt_LFunction (.inr hψ')).logDeriv
-      (LFunction_ne_zero_of_one_le_re ψ (.inl hψ') (by simp))
-  have hc : AnalyticAt ℂ (fun _ : ℂ ↦ (q.totient : ℂ)⁻¹) 1 := analyticAt_const
+      (LFunction_ne_zero_of_one_le_re ψ (.inl hψ') hz)
+  have hc : AnalyticAt ℂ (fun _ : ℂ ↦ (q.totient : ℂ)⁻¹) z := analyticAt_const
   convert hc.fun_mul (h₀.fun_sub h₁) using 1
   ext s
   simp only [LFunctionResidueClassAux, logDeriv_apply, neg_div, mul_div_assoc]
@@ -107,7 +125,7 @@ theorem analyticAt_residueClass_mul_one_sub_logDeriv_one {q d : ℕ} [NeZero q] 
     AnalyticAt ℂ (fun s ↦ LFunctionResidueClassAux a s +
       (q.totient : ℂ)⁻¹ * (∑ ψ : DirichletCharacter ℂ q,
         ψ a⁻¹ * logDeriv (ψ.mul ξ).LFunction s) - (q.totient : ℂ)⁻¹) 1 := by
-  refine ((analyticAt_LFunctionResidueClassAux_one a).fun_add
+  refine ((analyticAt_LFunctionResidueClassAux_of_one_le_re a (z := 1) (by simp)).fun_add
     (analyticAt_const.fun_mul (Finset.analyticAt_fun_sum _ fun ψ _ ↦
       analyticAt_const.fun_mul ?_))).sub analyticAt_const
   have hψξ : ψ.mul ξ ≠ 1 := by
